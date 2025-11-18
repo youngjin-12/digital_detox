@@ -69,6 +69,7 @@
                   <div class="breathe-fill"></div>
                 </div>
               </div>
+
               <div class="fire-cta">
                 <div>💡 팁</div>
                 <ul style="margin-left: 14px; margin-top: 2px">
@@ -80,6 +81,25 @@
                     화면으로 돌아와도 됩니다.
                   </li>
                 </ul>
+              </div>
+
+              <!-- 🎵 배경 사운드 컨트롤 -->
+              <div class="sound-controls">
+                <div class="sound-label">🎵 배경 소리</div>
+                <div class="sound-buttons">
+                  <button class="control-btn sound-btn" data-sound="none">
+                    끄기
+                  </button>
+                  <button class="control-btn sound-btn" data-sound="fire">
+                    불멍
+                  </button>
+                  <button class="control-btn sound-btn" data-sound="rain">
+                    빗소리
+                  </button>
+                  <button class="control-btn sound-btn" data-sound="forest">
+                    숲소리
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -123,6 +143,12 @@
                 <button id="timerPause" class="control-btn">일시정지</button>
                 <button id="timerReset" class="control-btn">초기화</button>
               </div>
+              <!-- 🔥 이 시간으로 디톡스 세션 시작 버튼 -->
+              <div class="detox-start-wrap">
+                <button id="detoxStart" class="control-btn">
+                  이 시간으로 디톡스 세션 시작
+                </button>
+              </div>
             </div>
             <div class="sub-card">
               <h3>사용 예시</h3>
@@ -161,6 +187,22 @@
             </div>
           </div>
         </section>
+      </div>
+
+      <!-- 🔊 배경 사운드 플레이어 -->
+      <audio id="bgSound" loop></audio>
+
+      <!-- 🧘 디톡스 세션 풀스크린 오버레이 -->
+      <div id="detoxOverlay" class="detox-overlay detox-hidden">
+        <div class="detox-content">
+          <div class="detox-title">디지털 디톡스 세션</div>
+          <div id="detoxTimer" class="detox-timer">00:00</div>
+          <div class="detox-msg">
+            지금은 멍때리는 시간입니다.<br />
+            화면에서 눈을 떼고, 호흡에만 집중해 보세요.
+          </div>
+          <button id="detoxEndBtn" class="control-btn">세션 종료</button>
+        </div>
       </div>
     </div>
 

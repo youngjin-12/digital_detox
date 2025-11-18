@@ -458,3 +458,87 @@ button.control-btn:disabled {
   padding: 2px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
+
+/* ============================= */
+/* 디톡스 세션 풀스크린 오버레이 */
+/* ============================= */
+.detox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detox-hidden {
+  display: none;
+}
+
+.detox-content {
+  max-width: 420px;
+  padding: 24px 20px 26px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0,
+    #12121a 55%
+  );
+  text-align: center;
+  color: #fdfdfd;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.detox-title {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.detox-timer {
+  font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 2.6rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.detox-msg {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-bottom: 16px;
+}
+
+/* 디톡스 시작 버튼 감싸기 */
+.detox-start-wrap {
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ============================= */
+/* 배경 사운드 컨트롤             */
+/* ============================= */
+.sound-controls {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+  font-size: 0.8rem;
+}
+
+.sound-label {
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.sound-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.sound-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}

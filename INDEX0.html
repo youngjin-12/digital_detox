@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>디지털 디톡스 허브</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --fg: #f5f5f5;
+        --accent: #ffb347;
+        --accent-soft: rgba(255, 179, 71, 0.2);
+        --card-bg: rgba(20, 26, 46, 0.95);
+        --border: rgba(255, 255, 255, 0.06);
+      }
+
+      body[data-theme="warm"] {
+        --bg: #120505;
+        --fg: #fdf4e3;
+        --accent: #ff7b54;
+        --accent-soft: rgba(255, 123, 84, 0.2);
+        --card-bg: rgba(35, 12, 8, 0.96);
+        --border: rgba(255, 244, 227, 0.12);
+      }
+
+      body[data-theme="cool"] {
+        --bg: #050b18;
+        --fg: #e3f2fd;
+        --accent: #64b5f6;
+        --accent-soft: rgba(100, 181, 246, 0.18);
+        --card-bg: rgba(11, 19, 34, 0.96);
+        --border: rgba(227, 242, 253, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #1b2838 0, var(--bg) 45%);
+        color: var(--fg);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .app {
+        width: min(980px, 100%);
+        padding: 24px 20px 28px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        gap: 12px;
+      }
+
+      .title-block h1 {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+      }
+
+      .title-block p {
+        font-size: 0.85rem;
+        opacity: 0.8;
+      }
+
+      .theme-select {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      select {
+        background: var(--card-bg);
+        color: var(--fg);
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        padding: 4px 10px;
+        outline: none;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        padding: 16px 16px 18px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(16px);
+      }
+
+      .mode-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+
+      .mode-btn {
+        flex: 1 1 120px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--fg);
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: background 0.15s ease, border 0.15s ease,
+          transform 0.05s ease;
+      }
+
+      .mode-btn span.emoji {
+        font-size: 1.1rem;
+      }
+
+      .mode-btn.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .mode-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .mode-section {
+        display: none;
+        margin-top: 8px;
+      }
+
+      .mode-section.active {
+        display: block;
+      }
+
+      /* 공통 타이틀 & 설명 */
+      .mode-header {
+        margin-bottom: 10px;
+      }
+
+      .mode-header h2 {
+        font-size: 1.05rem;
+        margin-bottom: 4px;
+      }
+
+      .mode-header p {
+        font-size: 0.82rem;
+        opacity: 0.8;
+      }
+
+      /* 불멍 영역 */
+      .fire-wrapper {
+        position: relative;
+        margin-top: 10px;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: radial-gradient(
+          circle at bottom,
+          #ffb347 0,
+          #ff7a3c 18%,
+          #1b1020 65%
+        );
+        min-height: 260px;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .fire-visual {
+        flex: 2;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+
+      /* 간단한 CSS 불 효과 */
+      .flame-layer {
+        position: absolute;
+        bottom: -20%;
+        width: 160%;
+        height: 120%;
+        background: radial-gradient(
+          circle at 50% 80%,
+          rgba(255, 255, 255, 0.9),
+          rgba(255, 213, 128, 0.8),
+          rgba(255, 120, 64, 0.2),
+          transparent 70%
+        );
+        opacity: 0.9;
+        mix-blend-mode: screen;
+        filter: blur(6px);
+        animation: flicker 2s infinite ease-in-out alternate;
+      }
+
+      .flame-layer:nth-child(2) {
+        animation-duration: 1.5s;
+        animation-direction: alternate-reverse;
+        opacity: 0.65;
+        transform: scaleX(1.1);
+      }
+
+      .flame-layer:nth-child(3) {
+        animation-duration: 2.8s;
+        opacity: 0.45;
+        transform: scaleX(0.9);
+      }
+
+      @keyframes flicker {
+        0% {
+          transform: translateX(-4px) scaleY(1);
+        }
+        50% {
+          transform: translateX(3px) scaleY(1.12);
+        }
+        100% {
+          transform: translateX(-3px) scaleY(1.05);
+        }
+      }
+
+      /* 장작 */
+      .logs {
+        position: relative;
+        width: 140px;
+        height: 30px;
+        margin-bottom: 24px;
+      }
+
+      .log {
+        position: absolute;
+        width: 120px;
+        height: 18px;
+        background: linear-gradient(90deg, #3b2a23, #5a3b2a);
+        border-radius: 20px;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) rotate(-7deg);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+      }
+
+      .log:nth-child(2) {
+        transform: translateX(-50%) rotate(9deg);
+        top: 8px;
+      }
+
+      .fire-info {
+        flex: 1.25;
+        padding: 16px 16px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: radial-gradient(
+          circle at top left,
+          rgba(0, 0, 0, 0.35) 0,
+          transparent 45%
+        );
+        color: #fffdf7;
+      }
+
+      .fire-text {
+        font-size: 0.88rem;
+        line-height: 1.4;
+        opacity: 0.9;
+      }
+
+      .breathe-tip {
+        font-size: 0.8rem;
+        margin-top: 8px;
+        opacity: 0.85;
+      }
+
+      .breathe-bar {
+        margin-top: 12px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+
+      .breathe-fill {
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #ffd54f, #ff8a65);
+        animation: breathe 10s infinite;
+      }
+
+      @keyframes breathe {
+        0% {
+          width: 10%;
+        }
+        25% {
+          width: 70%;
+        } /* 들숨 */
+        50% {
+          width: 80%;
+        } /* 유지 */
+        100% {
+          width: 15%;
+        } /* 날숨 */
+      }
+
+      .fire-cta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.8rem;
+        opacity: 0.9;
+      }
+
+      /* 타이머 & 스톱워치 공통 */
+      .timer-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1.7fr;
+        gap: 12px;
+        margin-top: 8px;
+        align-items: start;
+      }
+
+      @media (max-width: 720px) {
+        .timer-grid {
+          grid-template-columns: 1fr;
+        }
+        .fire-wrapper {
+          flex-direction: column;
+        }
+      }
+
+      .display-box {
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        padding: 16px 14px;
+        background: radial-gradient(
+          circle at top,
+          rgba(255, 255, 255, 0.04) 0,
+          transparent 55%
+        );
+      }
+
+      .time-display {
+        font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 1.8rem;
+        letter-spacing: 0.08em;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+
+      .label {
+        font-size: 0.78rem;
+        text-align: center;
+        opacity: 0.75;
+        margin-bottom: 6px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+        margin-top: 6px;
+      }
+
+      button.control-btn {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--fg);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.12s ease, border 0.12s ease,
+          transform 0.05s ease;
+      }
+
+      button.control-btn.primary {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      button.control-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-1px);
+      }
+
+      button.control-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+        transform: none;
+      }
+
+      .timer-inputs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+
+      .timer-inputs input {
+        width: 52px;
+        padding: 4px 6px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 0.85rem;
+        text-align: center;
+        outline: none;
+      }
+
+      .hint {
+        font-size: 0.78rem;
+        opacity: 0.75;
+        margin-top: 4px;
+        text-align: center;
+      }
+
+      .sub-card {
+        border-radius: 14px;
+        border: 1px dashed var(--border);
+        padding: 10px 10px 12px;
+        font-size: 0.82rem;
+        opacity: 0.9;
+      }
+
+      .sub-card h3 {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+      }
+
+      .laps {
+        margin-top: 8px;
+        max-height: 130px;
+        overflow-y: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 0.78rem;
+      }
+
+      .lap-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+    </style>
+  </head>
+  <body data-theme="warm">
+    <div class="app">
+      <header class="header">
+        <div class="title-block">
+          <h1>디지털 디톡스 허브</h1>
+          <p>
+            멍때리기 불멍 · 타이머 · 스톱워치로 잠깐이라도 스크린에서 한 발
+            떨어지기
+          </p>
+        </div>
+        <div class="theme-select">
+          테마
+          <select id="themeSelect">
+            <option value="warm">따뜻한 불멍</option>
+            <option value="dark">다크 모드</option>
+            <option value="cool">차분한 블루</option>
+          </select>
+        </div>
+      </header>
+
+      <div class="card">
+        <!-- 모드 선택 탭 -->
+        <div class="mode-tabs">
+          <button class="mode-btn active" data-mode="fire">
+            <span class="emoji">🔥</span><span>불멍 멍때리기</span>
+          </button>
+          <button class="mode-btn" data-mode="timer">
+            <span class="emoji">⏰</span><span>타이머</span>
+          </button>
+          <button class="mode-btn" data-mode="stopwatch">
+            <span class="emoji">⏱️</span><span>스톱워치</span>
+          </button>
+        </div>
+
+        <!-- 불멍 모드 -->
+        <section id="mode-fire" class="mode-section active">
+          <div class="mode-header">
+            <h2>🔥 불멍 디지털 디톡스</h2>
+            <p>
+              아무것도 안 해도 괜찮은 시간. 그냥 불빛과 호흡만 바라보는
+              모드입니다.
+            </p>
+          </div>
+          <div class="fire-wrapper">
+            <div class="fire-visual">
+              <div class="flame-layer"></div>
+              <div class="flame-layer"></div>
+              <div class="flame-layer"></div>
+              <div class="logs">
+                <div class="log"></div>
+                <div class="log"></div>
+              </div>
+            </div>
+            <div class="fire-info">
+              <div>
+                <div class="fire-text">
+                  눈을 잠깐 감고, 불빛이 깜빡이는 리듬에 맞춰서
+                  <strong>4초 들이마시고 · 4초 멈추고 · 6초 내쉬기</strong>를
+                  반복해 보세요.
+                </div>
+                <div class="breathe-tip">
+                  타이머나 스톱워치를 쓰고 싶다면 위의 탭에서 원하는 기능으로
+                  언제든지 이동할 수 있습니다.
+                </div>
+                <div class="breathe-bar">
+                  <div class="breathe-fill"></div>
+                </div>
+              </div>
+              <div class="fire-cta">
+                <div>💡 팁</div>
+                <ul style="margin-left: 14px; margin-top: 2px">
+                  <li>
+                    2~3분이라도 멍때리면 뇌가 리셋되는 느낌을 받을 수 있어요.
+                  </li>
+                  <li>
+                    알람이 필요하면 ⏰ 타이머 탭에서 시간을 설정한 뒤, 다시 이
+                    화면으로 돌아와도 됩니다.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 타이머 모드 -->
+        <section id="mode-timer" class="mode-section">
+          <div class="mode-header">
+            <h2>⏰ 타이머</h2>
+            <p>
+              디지털 디톡스 시간(예: 3분 멍때리기, 10분 휴식)을 설정해두고
+              알람으로 알려줍니다.
+            </p>
+          </div>
+          <div class="timer-grid">
+            <div class="display-box">
+              <div class="label">남은 시간</div>
+              <div id="timerDisplay" class="time-display">00:00</div>
+              <div class="timer-inputs">
+                <input
+                  id="timerMin"
+                  type="number"
+                  min="0"
+                  max="999"
+                  placeholder="분"
+                />
+                :
+                <input
+                  id="timerSec"
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="초"
+                />
+              </div>
+              <div class="hint">시간을 입력한 뒤 시작을 누르세요.</div>
+              <div class="controls">
+                <button id="timerStart" class="control-btn primary">
+                  시작
+                </button>
+                <button id="timerPause" class="control-btn">일시정지</button>
+                <button id="timerReset" class="control-btn">초기화</button>
+              </div>
+            </div>
+            <div class="sub-card">
+              <h3>사용 예시</h3>
+              <ul style="margin-left: 16px">
+                <li>3분 불멍 · 10분 스트레칭 · 25분 포모도로 집중 시간 등</li>
+                <li>
+                  타이머가 끝나면 브라우저에서 짧은 알람 소리 + 알림이 뜹니다.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 스톱워치 모드 -->
+        <section id="mode-stopwatch" class="mode-section">
+          <div class="mode-header">
+            <h2>⏱️ 스톱워치</h2>
+            <p>
+              디톡스 혹은 집중 시간이 실제로 얼마나 흘렀는지 재는 용도입니다.
+            </p>
+          </div>
+          <div class="timer-grid">
+            <div class="display-box">
+              <div class="label">경과 시간</div>
+              <div id="swDisplay" class="time-display">00:00.0</div>
+              <div class="controls">
+                <button id="swStart" class="control-btn primary">시작</button>
+                <button id="swPause" class="control-btn">일시정지</button>
+                <button id="swReset" class="control-btn">리셋</button>
+                <button id="swLap" class="control-btn">랩</button>
+              </div>
+            </div>
+            <div class="sub-card">
+              <h3>랩 기록</h3>
+              <div id="swLaps" class="laps"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      // ======================
+      // 테마 변경
+      // ======================
+      const themeSelect = document.getElementById("themeSelect");
+      const body = document.body;
+
+      themeSelect.addEventListener("change", () => {
+        const val = themeSelect.value;
+        if (val === "dark") {
+          body.setAttribute("data-theme", "dark");
+        } else if (val === "cool") {
+          body.setAttribute("data-theme", "cool");
+        } else {
+          body.setAttribute("data-theme", "warm");
+        }
+      });
+
+      // ======================
+      // 모드 탭 전환
+      // ======================
+      const modeButtons = document.querySelectorAll(".mode-btn");
+      const modeSections = {
+        fire: document.getElementById("mode-fire"),
+        timer: document.getElementById("mode-timer"),
+        stopwatch: document.getElementById("mode-stopwatch"),
+      };
+
+      modeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const mode = btn.dataset.mode;
+          // 버튼 스타일
+          modeButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          // 섹션 토글
+          Object.keys(modeSections).forEach((m) => {
+            modeSections[m].classList.toggle("active", m === mode);
+          });
+        });
+      });
+
+      // ======================
+      // Web Audio 간단 알람
+      // ======================
+      function playBeep() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = 880;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.65);
+        } catch (e) {
+          console.warn("알람 재생 실패:", e);
+        }
+      }
+
+      // ======================
+      // 타이머 로직
+      // ======================
+      const timerDisplay = document.getElementById("timerDisplay");
+      const timerMinInput = document.getElementById("timerMin");
+      const timerSecInput = document.getElementById("timerSec");
+      const timerStartBtn = document.getElementById("timerStart");
+      const timerPauseBtn = document.getElementById("timerPause");
+      const timerResetBtn = document.getElementById("timerReset");
+
+      let timerInterval = null;
+      let timerRemainingMs = 0;
+      let timerRunning = false;
+
+      function formatTimer(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const s = String(totalSeconds % 60).padStart(2, "0");
+        return `${m}:${s}`;
+      }
+
+      function updateTimerDisplay() {
+        timerDisplay.textContent = formatTimer(timerRemainingMs);
+      }
+
+      function startTimer() {
+        if (!timerRunning) {
+          // 처음 시작: 입력값에서 시간 읽기
+          if (timerRemainingMs <= 0) {
+            const m = parseInt(timerMinInput.value || "0", 10);
+            const s = parseInt(timerSecInput.value || "0", 10);
+            const total = (m * 60 + s) * 1000;
+            if (total <= 0) {
+              alert("분/초를 입력한 뒤 시작을 눌러주세요.");
+              return;
+            }
+            timerRemainingMs = total;
+            updateTimerDisplay();
+          }
+
+          timerRunning = true;
+          const startTime = Date.now();
+          const startRemaining = timerRemainingMs;
+
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            timerRemainingMs = startRemaining - elapsed;
+            if (timerRemainingMs <= 0) {
+              timerRemainingMs = 0;
+              updateTimerDisplay();
+              clearInterval(timerInterval);
+              timerRunning = false;
+              playBeep();
+              alert("타이머가 종료되었습니다!");
+            } else {
+              updateTimerDisplay();
+            }
+          }, 100);
+        }
+      }
+
+      function pauseTimer() {
+        if (timerRunning) {
+          timerRunning = false;
+          clearInterval(timerInterval);
+        }
+      }
+
+      function resetTimer() {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        timerRemainingMs = 0;
+        updateTimerDisplay();
+      }
+
+      timerStartBtn.addEventListener("click", startTimer);
+      timerPauseBtn.addEventListener("click", pauseTimer);
+      timerResetBtn.addEventListener("click", resetTimer);
+      updateTimerDisplay();
+
+      // ======================
+      // 스톱워치 로직
+      // ======================
+      const swDisplay = document.getElementById("swDisplay");
+      const swStartBtn = document.getElementById("swStart");
+      const swPauseBtn = document.getElementById("swPause");
+      const swResetBtn = document.getElementById("swReset");
+      const swLapBtn = document.getElementById("swLap");
+      const swLaps = document.getElementById("swLaps");
+
+      let swInterval = null;
+      let swRunning = false;
+      let swElapsedMs = 0;
+      let swStartTime = 0;
+      let swLapCount = 0;
+
+      function formatStopwatch(ms) {
+        const totalMs = Math.max(0, ms);
+        const totalSeconds = Math.floor(totalMs / 1000);
+        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const secs = String(totalSeconds % 60).padStart(2, "0");
+        const tenths = String(Math.floor((totalMs % 1000) / 100));
+        return `${mins}:${secs}.${tenths}`;
+      }
+
+      function updateStopwatchDisplay() {
+        swDisplay.textContent = formatStopwatch(swElapsedMs);
+      }
+
+      function startStopwatch() {
+        if (!swRunning) {
+          swRunning = true;
+          swStartTime = Date.now() - swElapsedMs;
+          if (swInterval) clearInterval(swInterval);
+          swInterval = setInterval(() => {
+            swElapsedMs = Date.now() - swStartTime;
+            updateStopwatchDisplay();
+          }, 60);
+        }
+      }
+
+      function pauseStopwatch() {
+        if (swRunning) {
+          swRunning = false;
+          clearInterval(swInterval);
+        }
+      }
+
+      function resetStopwatch() {
+        swRunning = false;
+        clearInterval(swInterval);
+        swElapsedMs = 0;
+        swLapCount = 0;
+        swLaps.innerHTML = "";
+        updateStopwatchDisplay();
+      }
+
+      function addLap() {
+        if (!swRunning) return;
+        swLapCount += 1;
+        const div = document.createElement("div");
+        div.className = "lap-line";
+        div.innerHTML = `<span>랩 ${swLapCount}</span><span>${formatStopwatch(
+          swElapsedMs
+        )}</span>`;
+        swLaps.prepend(div);
+      }
+
+      swStartBtn.addEventListener("click", startStopwatch);
+      swPauseBtn.addEventListener("click", pauseStopwatch);
+      swResetBtn.addEventListener("click", resetStopwatch);
+      swLapBtn.addEventListener("click", addLap);
+      updateStopwatchDisplay();
+    </script>
+  </body>
+</html>
