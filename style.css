@@ -1,0 +1,460 @@
+:root {
+  --bg: #0b1020;
+  --fg: #f5f5f5;
+  --accent: #ffb347;
+  --accent-soft: rgba(255, 179, 71, 0.2);
+  --card-bg: rgba(20, 26, 46, 0.95);
+  --border: rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="warm"] {
+  --bg: #120505;
+  --fg: #fdf4e3;
+  --accent: #ff7b54;
+  --accent-soft: rgba(255, 123, 84, 0.2);
+  --card-bg: rgba(35, 12, 8, 0.96);
+  --border: rgba(255, 244, 227, 0.12);
+}
+
+body[data-theme="cool"] {
+  --bg: #050b18;
+  --fg: #e3f2fd;
+  --accent: #64b5f6;
+  --accent-soft: rgba(100, 181, 246, 0.18);
+  --card-bg: rgba(11, 19, 34, 0.96);
+  --border: rgba(227, 242, 253, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at top, #1b2838 0, var(--bg) 45%);
+  color: var(--fg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app {
+  width: min(980px, 100%);
+  padding: 24px 20px 28px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.title-block h1 {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.title-block p {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.theme-select {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+select {
+  background: var(--card-bg);
+  color: var(--fg);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  outline: none;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  padding: 16px 16px 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  flex: 1 1 120px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, border 0.15s ease, transform 0.05s ease;
+}
+
+.mode-btn span.emoji {
+  font-size: 1.1rem;
+}
+
+.mode-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.mode-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mode-section {
+  display: none;
+  margin-top: 8px;
+}
+
+.mode-section.active {
+  display: block;
+}
+
+/* 공통 타이틀 & 설명 */
+.mode-header {
+  margin-bottom: 10px;
+}
+
+.mode-header h2 {
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.mode-header p {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+/* 불멍 영역 */
+.fire-ascii {
+  font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 9px;
+  line-height: 9px;
+  white-space: pre;
+  margin: 0;
+}
+
+.fire-wrapper {
+  position: relative;
+  margin-top: 10px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: radial-gradient(
+    circle at bottom,
+    #ffb347 0,
+    #ff7a3c 18%,
+    #1b1020 65%
+  );
+  min-height: 260px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.fire-visual {
+  flex: 2;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* (이전 CSS 불 효과 / 장작 관련, 원하면 나중에 지워도 됨) */
+.flame-layer {
+  position: absolute;
+  bottom: -20%;
+  width: 160%;
+  height: 120%;
+  background: radial-gradient(
+    circle at 50% 80%,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 213, 128, 0.8),
+    rgba(255, 120, 64, 0.2),
+    transparent 70%
+  );
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  filter: blur(6px);
+  animation: flicker 2s infinite ease-in-out alternate;
+}
+
+.flame-layer:nth-child(2) {
+  animation-duration: 1.5s;
+  animation-direction: alternate-reverse;
+  opacity: 0.65;
+  transform: scaleX(1.1);
+}
+
+.flame-layer:nth-child(3) {
+  animation-duration: 2.8s;
+  opacity: 0.45;
+  transform: scaleX(0.9);
+}
+
+@keyframes flicker {
+  0% {
+    transform: translateX(-4px) scaleY(1);
+  }
+  50% {
+    transform: translateX(3px) scaleY(1.12);
+  }
+  100% {
+    transform: translateX(-3px) scaleY(1.05);
+  }
+}
+
+/* 장작 */
+.logs {
+  position: relative;
+  width: 140px;
+  height: 30px;
+  margin-bottom: 24px;
+}
+
+.log {
+  position: absolute;
+  width: 120px;
+  height: 18px;
+  background: linear-gradient(90deg, #3b2a23, #5a3b2a);
+  border-radius: 20px;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(-7deg);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+}
+
+.log:nth-child(2) {
+  transform: translateX(-50%) rotate(9deg);
+  top: 8px;
+}
+
+.fire-info {
+  flex: 1.25;
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(
+    circle at top left,
+    rgba(0, 0, 0, 0.35) 0,
+    transparent 45%
+  );
+  color: #fffdf7;
+}
+
+.fire-text {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.breathe-tip {
+  font-size: 0.8rem;
+  margin-top: 8px;
+  opacity: 0.85;
+}
+
+.breathe-bar {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.breathe-fill {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ffd54f, #ff8a65);
+  animation: breathe 10s infinite;
+}
+
+@keyframes breathe {
+  0% {
+    width: 10%;
+  }
+  25% {
+    width: 70%;
+  }
+  50% {
+    width: 80%;
+  }
+  100% {
+    width: 15%;
+  }
+}
+
+.fire-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+/* 타이머 & 스톱워치 공통 */
+.timer-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1.7fr;
+  gap: 12px;
+  margin-top: 8px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .timer-grid {
+    grid-template-columns: 1fr;
+  }
+  .fire-wrapper {
+    flex-direction: column;
+  }
+}
+
+.display-box {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 16px 14px;
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.04) 0,
+    transparent 55%
+  );
+}
+
+.time-display {
+  font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.label {
+  font-size: 0.78rem;
+  text-align: center;
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+button.control-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--fg);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s ease, border 0.12s ease, transform 0.05s ease;
+}
+
+button.control-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+button.control-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+button.control-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.timer-inputs input {
+  width: 52px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: center;
+  outline: none;
+}
+
+.hint {
+  font-size: 0.78rem;
+  opacity: 0.75;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.sub-card {
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  padding: 10px 10px 12px;
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+.sub-card h3 {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.laps {
+  margin-top: 8px;
+  max-height: 130px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.78rem;
+}
+
+.lap-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
