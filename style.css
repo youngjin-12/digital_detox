@@ -1,0 +1,577 @@
+:root {
+  --bg: #050812;
+  --fg: #f5f5f5;
+  --accent: #ffb347;
+  --accent-soft: rgba(255, 179, 71, 0.18);
+  --card-bg: rgba(13, 18, 32, 0.96);
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: radial-gradient(circle at top, #1a2337 0, var(--bg) 45%);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1580px;
+  margin: 18px auto 26px;
+  padding: 0 16px;
+}
+
+/* 상단 바 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.digital-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.4);
+  font-family: ui-monospace;
+  font-size: 0.9rem;
+}
+
+.title-block h1 {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.title-block p {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+/* 메인 레이아웃 */
+.main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 300px;
+  gap: 16px;
+  margin-bottom: 0;
+  padding-bottom: 40px;
+}
+
+.panel {
+  margin-bottom: 0;
+  padding-bottom: 20px;
+}
+
+/* 중앙 장면 영역 */
+.scene-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.scene-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.78;
+  margin-bottom: 8px;
+}
+
+.scene-canvas {
+  width: 100%;
+  height: calc(100vh - 240px);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: background 0.8s ease;
+}
+
+/* 오른쪽 컨트롤 */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 10px 10px 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.control-card h2 {
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.timer-inputs input {
+  width: 52px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--fg);
+  text-align: center;
+}
+
+.time-display {
+  font-family: ui-monospace;
+  font-size: 1.6rem;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.control-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.sound-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sound-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.lock-status {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* 마우스를 올리면 자동으로 튀어나옴 */
+.floating-sidebar-left:hover {
+  transform: translateX(0);
+}
+
+.sidebar-grip {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #c5c5c5;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.side-theme-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.side-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.side-theme-btn.active {
+  background: rgba(255, 179, 71, 0.22);
+  box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.85);
+}
+
+/* ===== 디톡스 세션 모달 ===== */
+
+.detox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* 보여줄 때 붙일 클래스 */
+.detox-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detox-dialog {
+  width: min(420px, 90vw);
+  padding: 24px 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle at top, #262633 0, #090910 70%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  color: #fdfdfd;
+}
+
+.detox-title {
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+
+.detox-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 2.6rem;
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+}
+
+.detox-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin-bottom: 18px;
+}
+
+.detox-end-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.title-block {
+  display: flex;
+  align-items: center;
+}
+
+/* 로고 + 텍스트를 감싸는 알약 모양 배지 */
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* 워너원 로고 스타일 */
+.logo-img {
+  height: 26px; /* 너무 크면 22px로 줄여봐도 됨 */
+  width: auto;
+  display: block;
+  border-radius: 6px; /* 살짝 둥글리기 */
+  object-fit: contain;
+}
+
+/* 텍스트 쪽 */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.brand-sub {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+/* ===== 아래 테마 스트립 ===== */
+.theme-strip {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-window {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.theme-chip {
+  min-width: 110px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border 0.15s ease, transform 0.08s ease;
+}
+
+.theme-chip .emoji {
+  font-size: 1.1rem;
+}
+
+.theme-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px rgba(255, 179, 71, 0.6);
+  transform: translateY(-1px);
+}
+
+.theme-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 좌우 네비 버튼 */
+.theme-nav-btn {
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+/* ===== 공통 페이지 토글 ===== */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* ===== 페이지 1 : 테마 선택 ===== */
+.page-select {
+  margin-top: 24px;
+}
+/* --- 첫 페이지 로고 영역 --- */
+
+.select-hero {
+  margin: 36px auto 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* 중앙 로고 카드 */
+.team-logo {
+  position: relative;
+  padding: 22px 28px;
+  border-radius: 28px;
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.08) 0,
+    rgba(0, 0, 0, 0.4) 60%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+}
+
+/* 살짝 퍼지는 빛 효과 */
+.team-logo-glow {
+  position: absolute;
+  inset: -24px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.22),
+    transparent 65%
+  );
+  opacity: 0.9;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+/* 실제 로고 이미지 */
+.team-logo-img {
+  display: block;
+  max-width: 260px; /* 너무 커지지 않게 제한 */
+  max-height: 160px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* 로고 아래 안내 문구 */
+.select-sub {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  letter-spacing: 0.04em;
+}
+
+.select-grid-wrapper {
+  margin-top: 18px;
+  padding: 10px 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(0, 0, 0, 0.6) 55%
+  );
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.select-grid {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.select-card {
+  width: 26%; /* 크게! */
+  min-width: 220px;
+  height: 260px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--fg);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border 0.16s ease,
+    background 0.16s ease;
+  text-align: left;
+}
+
+.select-card .emoji {
+  font-size: 2.2rem;
+}
+
+.select-card .name {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.select-card .desc {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.select-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 50px rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.7);
+  border-color: var(--accent);
+}
+
+.select-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.9);
+}
+
+/* 페이지 1 좌우 화살표 */
+.select-nav-btn {
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+/* 반응형: 화면 좁을 때는 카드 폭 줄이기 */
+@media (max-width: 960px) {
+  .select-grid {
+    gap: 10px;
+  }
+  .select-card {
+    width: 30%;
+    min-width: 180px;
+    height: 220px;
+  }
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.back-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f5f5f5;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}

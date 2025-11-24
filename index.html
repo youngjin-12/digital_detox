@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>디지털 디톡스 데모</title>
+    <!-- 분리된 CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- 상단 바 -->
+      <header class="topbar">
+        <div class="top-left">
+          <div class="digital-clock">
+            🕒 <span id="digitalClock">00:00:00</span>
+          </div>
+          <!-- 로고/타이틀 영역 제거됨 -->
+        </div>
+      </header>
+
+      <!-- ① 테마 선택 페이지 (첫 화면) -->
+      <main id="page-select" class="page page-select active">
+        <section class="select-hero">
+          <div class="team-logo">
+            <div class="team-logo-glow"></div>
+            <img src="logo.png" alt="우리 팀 로고" class="team-logo-img" />
+          </div>
+        </section>
+
+        <section class="select-grid-wrapper">
+          <button class="control-btn select-nav-btn" id="selectPrevBtn">
+            ◀
+          </button>
+
+          <div class="select-grid" id="selectGrid">
+            <button class="select-card" data-key="fire">
+              <span class="emoji">🔥</span>
+              <span class="name">불멍</span>
+              <span class="desc">장작불 앞에서 멍때리기</span>
+            </button>
+            <button class="select-card" data-key="water">
+              <span class="emoji">💧</span>
+              <span class="name">물멍</span>
+              <span class="desc">잔잔한 수면만 바라보기</span>
+            </button>
+            <button class="select-card" data-key="rain">
+              <span class="emoji">🌧</span>
+              <span class="name">빗소리</span>
+              <span class="desc">창밖 빗소리에 집중하기</span>
+            </button>
+            <button class="select-card" data-key="bubble">
+              <span class="emoji">🫧</span>
+              <span class="name">버블</span>
+              <span class="desc">위로 떠오르는 기포 따라가기</span>
+            </button>
+            <button class="select-card" data-key="snow">
+              <span class="emoji">❄️</span>
+              <span class="name">눈</span>
+              <span class="desc">천천히 내리는 눈송이</span>
+            </button>
+            <button class="select-card" data-key="leaf">
+              <span class="emoji">🍂</span>
+              <span class="name">낙엽</span>
+              <span class="desc">가을바람에 흩날리는 낙엽</span>
+            </button>
+            <button class="select-card" data-key="frost">
+              <span class="emoji">🧊</span>
+              <span class="name">성에</span>
+              <span class="desc">서리 낀 창문 사이의 빛</span>
+            </button>
+          </div>
+
+          <button class="control-btn select-nav-btn" id="selectNextBtn">
+            ▶
+          </button>
+        </section>
+      </main>
+
+      <!-- ② 디톡스 세션 페이지 (두 번째 화면) -->
+      <main id="page-session" class="page page-session">
+        <div class="main-layout">
+          <!-- 왼쪽 장면 -->
+          <section class="panel">
+            <div class="session-header">
+              <!-- 여기서는 이제 제목/이모지만 -->
+              <div class="scene-title">
+                <span id="currentThemeEmoji">🔥</span>
+                <span id="currentThemeName">불멍</span>
+              </div>
+            </div>
+
+            <div class="scene-subtitle" id="currentThemeSubtitle">
+              장작불 앞에서 조용히 호흡만 느껴보세요.
+            </div>
+
+            <div id="sceneCanvas" class="scene-canvas">
+              선택한 테마에 맞는 애니메이션을 여기 표시
+            </div>
+
+            <!-- 하단 테마 스트립 (작은 칩들) -->
+            <div class="theme-strip">
+              <button class="control-btn theme-nav-btn" id="prevThemeBtn">
+                ◀ 이전
+              </button>
+
+              <div class="theme-window">
+                <button class="theme-chip" data-key="fire">
+                  <span class="emoji">🔥</span>
+                  <span class="label">불멍</span>
+                </button>
+                <button class="theme-chip" data-key="water">
+                  <span class="emoji">💧</span>
+                  <span class="label">물멍</span>
+                </button>
+                <button class="theme-chip" data-key="rain">
+                  <span class="emoji">🌧</span>
+                  <span class="label">빗소리</span>
+                </button>
+                <button class="theme-chip" data-key="bubble">
+                  <span class="emoji">🫧</span>
+                  <span class="label">버블</span>
+                </button>
+                <button class="theme-chip" data-key="snow">
+                  <span class="emoji">❄️</span>
+                  <span class="label">눈</span>
+                </button>
+                <button class="theme-chip" data-key="leaf">
+                  <span class="emoji">🍂</span>
+                  <span class="label">낙엽</span>
+                </button>
+                <button class="theme-chip" data-key="frost">
+                  <span class="emoji">🧊</span>
+                  <span class="label">성에</span>
+                </button>
+              </div>
+
+              <button class="control-btn theme-nav-btn" id="nextThemeBtn">
+                다음 ▶
+              </button>
+            </div>
+
+            <!-- 👇 이전 버튼: 아래 오른쪽 정렬 -->
+            <div
+              class="session-footer"
+              style="margin-top: 10px; display: flex; justify-content: flex-end"
+            >
+              <button id="backToSelect" class="back-btn">이전</button>
+            </div>
+          </section>
+
+          <!-- 오른쪽 컨트롤 -->
+          <aside class="control-panel">
+            <section class="control-card">
+              <h2>⏰ 타이머</h2>
+              <div class="label">디톡스 시간 설정</div>
+              <div class="timer-inputs">
+                <input id="timerMin" type="number" placeholder="분" />
+                :
+                <input id="timerSec" type="number" placeholder="초" />
+              </div>
+              <div id="timerDisplay" class="time-display">00:00</div>
+              <div class="controls">
+                <button id="timerStartBtn" class="control-btn primary">
+                  시작
+                </button>
+                <button id="timerPauseBtn" class="control-btn">일시정지</button>
+                <button id="timerResetBtn" class="control-btn">초기화</button>
+              </div>
+            </section>
+
+            <section class="control-card">
+              <h2>🎵 배경 소리</h2>
+              <!-- 🔥 이 라인(백색소음 / 자연음)은 삭제 -->
+              <div class="sound-buttons">
+                <button class="control-btn sound-btn" data-sound="none">
+                  끄기
+                </button>
+                <button class="control-btn sound-btn" data-sound="calm">
+                  잔잔하게
+                </button>
+                <button class="control-btn sound-btn" data-sound="bright">
+                  경쾌하게
+                </button>
+              </div>
+            </section>
+
+            <section class="control-card">
+              <h2>🔒 디톡스 잠금</h2>
+              <p class="label">디톡스 세션 시간 동안 알림으로 알려줍니다.</p>
+              <button id="detoxLockBtn" class="control-btn primary full-width">
+                디톡스 잠금 시작
+              </button>
+              <div id="lockStatus" class="lock-status">상태: 대기 중</div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <!-- 디지털 디톡스 세션 모달 (원하면 JS에서 사용) -->
+    <div id="detoxOverlay" class="detox-overlay">
+      <div class="detox-dialog">
+        <div class="detox-title">디지털 디톡스 세션</div>
+        <div id="detoxOverlayTime" class="detox-time">00:00</div>
+        <p class="detox-text">
+          지금은 멍때리는 시간입니다.<br />
+          화면에서 눈을 떼고, 호흡에만 집중해 보세요.
+        </p>
+        <button id="detoxEndBtn" class="control-btn primary detox-end-btn">
+          세션 종료
+        </button>
+      </div>
+    </div>
+
+    <!-- JS -->
+    <script src="app.js"></script>
+  </body>
+</html>
