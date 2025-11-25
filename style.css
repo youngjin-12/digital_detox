@@ -66,8 +66,8 @@ body {
 /* 메인 레이아웃 */
 .main-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 300px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 2.4fr) 260px; /* ← 왼쪽 더 넓게, 오른쪽 약간 좁게 */
+  gap: 18px;
   margin-bottom: 0;
   padding-bottom: 40px;
 }
@@ -421,42 +421,49 @@ body {
 }
 
 /* 중앙 로고 카드 */
+/* --- 첫 페이지 로고 영역 심플하게 리디자인 --- */
+
+/* 로고 위치는 그대로 중앙에 */
+.select-hero {
+  margin: 40px auto 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ✅ 네모 카드 제거: 배경·보더·박스쉐도우 전부 없애기 */
 .team-logo {
   position: relative;
-  padding: 22px 28px;
-  border-radius: 28px;
-  background: radial-gradient(
-    circle at top,
-    rgba(255, 255, 255, 0.08) 0,
-    rgba(0, 0, 0, 0.4) 60%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
+  padding: 0; /* 안쪽 여백 제거 */
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
-/* 살짝 퍼지는 빛 효과 */
-.team-logo-glow {
-  position: absolute;
-  inset: -24px;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 255, 255, 0.22),
-    transparent 65%
-  );
-  opacity: 0.9;
-  filter: blur(20px);
-  z-index: -1;
-}
-
-/* 실제 로고 이미지 */
+/* ✅ 로고만 보이도록 + 어두운 배경에 어울리게 색/광 추가 */
 .team-logo-img {
   display: block;
-  max-width: 260px; /* 너무 커지지 않게 제한 */
-  max-height: 160px;
-  width: auto;
+  width: 220px; /* 크기 적당히, 필요하면 200~260 사이로 조절 */
   height: auto;
   object-fit: contain;
+  /* 검정 로고라면: 흰색처럼 보이게 반전 + 살짝 밝게 */
+  filter: invert(1) brightness(1.1) drop-shadow(0 12px 28px rgba(0, 0, 0, 0.7));
+}
+
+/* ✅ 아주 은은한 빛만 뒤에 깔기 (카드처럼 보이지 않게) */
+.team-logo-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.16),
+    transparent 70%
+  );
+  opacity: 0.6;
+  filter: blur(32px);
+  z-index: -1;
 }
 
 /* 로고 아래 안내 문구 */
@@ -574,4 +581,64 @@ body {
 .back-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
+}
+
+/* 두 번째 페이지에서 이전 버튼만 보일 때 예쁘게 */
+.session-footer .back-btn {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.session-footer .back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+/* 🔥 두 번째 페이지 레이아웃 강제 복구 */
+#page-session .main-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+}
+
+/* 🔥 왼쪽 패널 기본 크기 복원 */
+#page-session .panel {
+  flex: 1 1 0;
+  max-width: none; /* 또는 이 줄을 아예 삭제 */
+}
+
+/* 🔥 오른쪽 패널 크기 복원 */
+#page-session .control-panel {
+  width: 350px;
+  flex-shrink: 0;
+}
+
+.panel-bottom-right {
+  margin-top: 12px; /* 직사각형과 버튼 사이 여유 */
+  width: 100%;
+  display: flex;
+  justify-content: flex-end; /* 오른쪽 끝 정렬 */
+}
+
+/* 이전 버튼 스타일 */
+.panel-bottom-right .back-btn {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.panel-bottom-right .back-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
