@@ -5,9 +5,12 @@ function updateClock() {
   const el = document.getElementById("digitalClock");
   if (!el) return;
   const now = new Date();
-  el.textContent = `${String(now.getHours()).padStart(2, "0")}:${String(
-    now.getMinutes()
-  ).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+  el.textContent =
+    String(now.getHours()).padStart(2, "0") +
+    ":" +
+    String(now.getMinutes()).padStart(2, "0") +
+    ":" +
+    String(now.getSeconds()).padStart(2, "0");
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -15,7 +18,7 @@ updateClock();
 /* =========================
    테마 정보
    ========================= */
-const themeInfo = {
+var themeInfo = {
   fire: {
     emoji: "🔥",
     name: "불멍",
@@ -60,17 +63,17 @@ const themeInfo = {
   },
 };
 
-const sceneEmoji = document.getElementById("currentThemeEmoji");
-const sceneName = document.getElementById("currentThemeName");
-const sceneSub = document.getElementById("currentThemeSubtitle");
-const sceneCanvas = document.getElementById("sceneCanvas");
+var sceneEmoji = document.getElementById("currentThemeEmoji");
+var sceneName = document.getElementById("currentThemeName");
+var sceneSub = document.getElementById("currentThemeSubtitle");
+var sceneCanvas = document.getElementById("sceneCanvas");
 
 /* =========================
    페이지 전환 (선택 / 세션)
    ========================= */
-const pageSelect = document.getElementById("page-select");
-const pageSession = document.getElementById("page-session");
-const backToSelectBtn = document.getElementById("backToSelect");
+var pageSelect = document.getElementById("page-select");
+var pageSession = document.getElementById("page-session");
+var backToSelectBtn = document.getElementById("backToSelect");
 
 function showPage(name) {
   if (!pageSelect || !pageSession) return;
@@ -83,9 +86,8 @@ function showPage(name) {
   }
 }
 
-// 세션 페이지 → 선택 페이지로 돌아가기
 if (backToSelectBtn) {
-  backToSelectBtn.addEventListener("click", () => {
+  backToSelectBtn.addEventListener("click", function () {
     showPage("select");
   });
 }
@@ -94,7 +96,7 @@ if (backToSelectBtn) {
    테마 적용 함수
    ========================= */
 function applyThemeByKey(key) {
-  const t = themeInfo[key];
+  var t = themeInfo[key];
   if (!t || !sceneCanvas || !sceneEmoji || !sceneName || !sceneSub) return;
 
   sceneEmoji.textContent = t.emoji;
@@ -102,42 +104,38 @@ function applyThemeByKey(key) {
   sceneSub.textContent = t.subtitle;
   sceneCanvas.style.background = t.bg;
 
-  // 세션 페이지 아래 작은 칩들 active 처리
-  document.querySelectorAll(".theme-chip").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.key === key);
-  });
+  var chips = document.querySelectorAll(".theme-chip");
+  for (var i = 0; i < chips.length; i++) {
+    var chip = chips[i];
+    chip.classList.toggle("active", chip.getAttribute("data-key") === key);
+  }
 
-  // 선택 페이지의 큰 카드 active 처리
-  document.querySelectorAll(".select-card").forEach((card) => {
-    card.classList.toggle("active", card.dataset.key === key);
-  });
+  var cards = document.querySelectorAll(".select-card");
+  for (var j = 0; j < cards.length; j++) {
+    var card = cards[j];
+    card.classList.toggle("active", card.getAttribute("data-key") === key);
+  }
 }
 
 /* =========================
    페이지 1 : 선택 그리드 (큰 카드 3개씩)
    ========================= */
-const SELECT_ORDER = [
-  "fire",
-  "water",
-  "rain",
-  "bubble",
-  "snow",
-  "leaf",
-  "frost",
-];
-const SELECT_PAGE_SIZE = 3;
-let selectStart = 0;
+var SELECT_ORDER = ["fire", "water", "rain", "bubble", "snow", "leaf", "frost"];
+var SELECT_PAGE_SIZE = 3;
+var selectStart = 0;
 
-const selectPrevBtn = document.getElementById("selectPrevBtn");
-const selectNextBtn = document.getElementById("selectNextBtn");
-const selectCards = document.querySelectorAll(".select-card");
+var selectPrevBtn = document.getElementById("selectPrevBtn");
+var selectNextBtn = document.getElementById("selectNextBtn");
+var selectCards = document.querySelectorAll(".select-card");
 
 function updateSelectGrid() {
   if (!selectCards.length) return;
-  selectCards.forEach((card, idx) => {
-    const visible = idx >= selectStart && idx < selectStart + SELECT_PAGE_SIZE;
+
+  for (var i = 0; i < selectCards.length; i++) {
+    var card = selectCards[i];
+    var visible = i >= selectStart && i < selectStart + SELECT_PAGE_SIZE;
     card.style.display = visible ? "flex" : "none";
-  });
+  }
 
   if (selectPrevBtn) {
     selectPrevBtn.disabled = selectStart === 0;
@@ -149,7 +147,7 @@ function updateSelectGrid() {
 }
 
 if (selectPrevBtn) {
-  selectPrevBtn.addEventListener("click", () => {
+  selectPrevBtn.addEventListener("click", function () {
     if (selectStart > 0) {
       selectStart -= SELECT_PAGE_SIZE;
       if (selectStart < 0) selectStart = 0;
@@ -159,7 +157,7 @@ if (selectPrevBtn) {
 }
 
 if (selectNextBtn) {
-  selectNextBtn.addEventListener("click", () => {
+  selectNextBtn.addEventListener("click", function () {
     if (selectStart + SELECT_PAGE_SIZE < SELECT_ORDER.length) {
       selectStart += SELECT_PAGE_SIZE;
       updateSelectGrid();
@@ -167,41 +165,35 @@ if (selectNextBtn) {
   });
 }
 
-// 큰 카드 클릭 → 테마 적용 + 세션 페이지로 이동
-selectCards.forEach((card) => {
-  card.addEventListener("click", () => {
-    const key = card.dataset.key;
-    applyThemeByKey(key);
-    showPage("session");
-  });
-});
+for (var k = 0; k < selectCards.length; k++) {
+  (function (card) {
+    card.addEventListener("click", function () {
+      var key = card.getAttribute("data-key");
+      applyThemeByKey(key);
+      showPage("session");
+    });
+  })(selectCards[k]);
+}
 
 /* =========================
    페이지 2 : 하단 테마 스트립 (작은 칩들)
    ========================= */
-const THEME_ORDER = [
-  "fire",
-  "water",
-  "rain",
-  "bubble",
-  "snow",
-  "leaf",
-  "frost",
-];
-const PAGE_SIZE = 3;
-let themePageStart = 0;
+var THEME_ORDER = ["fire", "water", "rain", "bubble", "snow", "leaf", "frost"];
+var PAGE_SIZE = 3;
+var themePageStart = 0;
 
-const prevThemeBtn = document.getElementById("prevThemeBtn");
-const nextThemeBtn = document.getElementById("nextThemeBtn");
+var prevThemeBtn = document.getElementById("prevThemeBtn");
+var nextThemeBtn = document.getElementById("nextThemeBtn");
 
 function updateThemeStrip() {
-  const chips = document.querySelectorAll(".theme-chip");
+  var chips = document.querySelectorAll(".theme-chip");
   if (!chips.length) return;
 
-  chips.forEach((chip, idx) => {
-    const visible = idx >= themePageStart && idx < themePageStart + PAGE_SIZE;
+  for (var i = 0; i < chips.length; i++) {
+    var chip = chips[i];
+    var visible = i >= themePageStart && i < themePageStart + PAGE_SIZE;
     chip.style.display = visible ? "flex" : "none";
-  });
+  }
 
   if (prevThemeBtn) {
     prevThemeBtn.disabled = themePageStart === 0;
@@ -211,14 +203,8 @@ function updateThemeStrip() {
   }
 }
 
-document.querySelectorAll(".theme-chip").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    applyThemeByKey(btn.dataset.key);
-  });
-});
-
 if (prevThemeBtn) {
-  prevThemeBtn.addEventListener("click", () => {
+  prevThemeBtn.addEventListener("click", function () {
     if (themePageStart > 0) {
       themePageStart -= PAGE_SIZE;
       if (themePageStart < 0) themePageStart = 0;
@@ -228,7 +214,7 @@ if (prevThemeBtn) {
 }
 
 if (nextThemeBtn) {
-  nextThemeBtn.addEventListener("click", () => {
+  nextThemeBtn.addEventListener("click", function () {
     if (themePageStart + PAGE_SIZE < THEME_ORDER.length) {
       themePageStart += PAGE_SIZE;
       updateThemeStrip();
@@ -236,29 +222,57 @@ if (nextThemeBtn) {
   });
 }
 
+var themeChips = document.querySelectorAll(".theme-chip");
+for (var c = 0; c < themeChips.length; c++) {
+  (function (btn) {
+    btn.addEventListener("click", function () {
+      applyThemeByKey(btn.getAttribute("data-key"));
+    });
+  })(themeChips[c]);
+}
+
 /* =========================
    타이머 로직
    ========================= */
-const timerMinInput = document.getElementById("timerMin");
-const timerSecInput = document.getElementById("timerSec");
-const timerDisplay = document.getElementById("timerDisplay");
+var timerMinInput = document.getElementById("timerMin");
+var timerSecInput = document.getElementById("timerSec");
+var timerDisplay = document.getElementById("timerDisplay");
 
-const timerStartBtn = document.getElementById("timerStartBtn");
-const timerPauseBtn = document.getElementById("timerPauseBtn");
-const timerResetBtn = document.getElementById("timerResetBtn");
+var timerStartBtn = document.getElementById("timerStartBtn");
+var timerPauseBtn = document.getElementById("timerPauseBtn");
+var timerResetBtn = document.getElementById("timerResetBtn");
 
-let timerInterval = null;
-let timerRemainingMs = 0;
-let timerRunning = false;
+var timerInterval = null;
+var timerRemainingMs = 0;
+var timerRunning = false;
 
-// 디톡스 세션 여부
-let detoxSessionActive = false;
+var startBtnIcon = null;
+var startBtnLabel = null;
+if (timerStartBtn) {
+  startBtnIcon = timerStartBtn.querySelector("i");
+  startBtnLabel = timerStartBtn.querySelector("span");
+}
+
+function setStartBtnState(isRunning) {
+  if (!startBtnIcon) return;
+  if (isRunning) {
+    startBtnIcon.classList.remove("fa-play");
+    startBtnIcon.classList.add("fa-pause");
+    if (startBtnLabel) startBtnLabel.textContent = "진행 중";
+  } else {
+    startBtnIcon.classList.remove("fa-pause");
+    startBtnIcon.classList.add("fa-play");
+    if (startBtnLabel) startBtnLabel.textContent = "시작";
+  }
+}
+
+var detoxSessionActive = false;
 
 function formatTimer(ms) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-  const s = String(totalSeconds % 60).padStart(2, "0");
-  return `${m}:${s}`;
+  var totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  var m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  var s = String(totalSeconds % 60).padStart(2, "0");
+  return m + ":" + s;
 }
 
 function updateTimerDisplay() {
@@ -269,9 +283,9 @@ function updateTimerDisplay() {
 
 function readTimerFromInput() {
   if (!timerMinInput || !timerSecInput) return 0;
-  const m = parseInt(timerMinInput.value || "0", 10);
-  const s = parseInt(timerSecInput.value || "0", 10);
-  const total = (m * 60 + s) * 1000;
+  var m = parseInt(timerMinInput.value || "0", 10);
+  var s = parseInt(timerSecInput.value || "0", 10);
+  var total = (m * 60 + s) * 1000;
   return isNaN(total) ? 0 : total;
 }
 
@@ -287,12 +301,14 @@ function startTimer() {
   }
 
   timerRunning = true;
-  const startTime = Date.now();
-  const startRemaining = timerRemainingMs;
+  setStartBtnState(true);
+
+  var startTime = Date.now();
+  var startRemaining = timerRemainingMs;
 
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const elapsed = Date.now() - startTime;
+  timerInterval = setInterval(function () {
+    var elapsed = Date.now() - startTime;
     timerRemainingMs = startRemaining - elapsed;
 
     if (timerRemainingMs <= 0) {
@@ -313,6 +329,7 @@ function pauseTimer() {
   if (!timerRunning) return;
   timerRunning = false;
   clearInterval(timerInterval);
+  setStartBtnState(false);
 }
 
 function resetTimer() {
@@ -322,25 +339,30 @@ function resetTimer() {
   updateTimerDisplay();
   detoxSessionActive = false;
   updateLockStatus("상태: 대기 중");
+  setStartBtnState(false);
 }
 
 if (timerStartBtn) {
-  timerStartBtn.addEventListener("click", () => {
+  timerStartBtn.addEventListener("click", function () {
     detoxSessionActive = false;
     updateLockStatus("상태: 대기 중");
     startTimer();
   });
 }
-if (timerPauseBtn) timerPauseBtn.addEventListener("click", pauseTimer);
-if (timerResetBtn) timerResetBtn.addEventListener("click", resetTimer);
+if (timerPauseBtn) {
+  timerPauseBtn.addEventListener("click", pauseTimer);
+}
+if (timerResetBtn) {
+  timerResetBtn.addEventListener("click", resetTimer);
+}
 
 updateTimerDisplay();
 
 /* =========================
    디톡스 세션(알림만) 로직
    ========================= */
-const detoxLockBtn = document.getElementById("detoxLockBtn");
-const lockStatus = document.getElementById("lockStatus");
+var detoxLockBtn = document.getElementById("detoxLockBtn");
+var lockStatus = document.getElementById("lockStatus");
 
 function updateLockStatus(text) {
   if (lockStatus) {
@@ -349,6 +371,8 @@ function updateLockStatus(text) {
 }
 
 function onTimerFinished() {
+  setStartBtnState(false);
+
   if (detoxSessionActive) {
     detoxSessionActive = false;
     updateLockStatus("상태: 완료 (디톡스 세션 종료)");
@@ -361,7 +385,7 @@ function onTimerFinished() {
 }
 
 if (detoxLockBtn) {
-  detoxLockBtn.addEventListener("click", () => {
+  detoxLockBtn.addEventListener("click", function () {
     if (!timerRunning && timerRemainingMs <= 0) {
       timerRemainingMs = readTimerFromInput();
       if (timerRemainingMs <= 0) {
@@ -390,29 +414,29 @@ updateThemeStrip();
 updateSelectGrid();
 applyThemeByKey("fire");
 showPage("select");
+setStartBtnState(false);
 
 /* =========================
    배경 소리 로직 (옵션)
    ========================= */
-const bgSound = document.getElementById("bgSound");
-const soundButtons = document.querySelectorAll(".sound-btn");
+var bgSound = document.getElementById("bgSound");
+var soundButtons = document.querySelectorAll(".sound-btn");
 
-// 각 키에 맞는 음원 경로
-const soundFiles = {
-  none: "", // 끄기
-  calm: "sounds/calm.mp3", // 잔잔하게
-  bright: "sounds/bright.mp3", // 경쾌하게
+var soundFiles = {
+  none: "",
+  calm: "sounds/calm.mp3",
+  bright: "sounds/bright.mp3",
 };
 
 function setBackgroundSound(key) {
   if (!bgSound) return;
 
-  // 버튼 active 스타일
-  soundButtons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.sound === key);
-  });
+  for (var i = 0; i < soundButtons.length; i++) {
+    var btn = soundButtons[i];
+    btn.classList.toggle("active", btn.getAttribute("data-sound") === key);
+  }
 
-  const src = soundFiles[key] || "";
+  var src = soundFiles[key] || "";
   if (!src) {
     bgSound.pause();
     bgSound.removeAttribute("src");
@@ -425,18 +449,15 @@ function setBackgroundSound(key) {
   bgSound.setAttribute("data-current", key);
   bgSound.src = src;
   bgSound.currentTime = 0;
-  bgSound.play().catch(() => {
-    // 모바일에서 첫 터치 전에 play가 막힐 수 있으니 무시
-  });
+  bgSound.play()["catch"](function () {});
 }
 
-// 버튼 클릭 이벤트
-soundButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.sound;
-    setBackgroundSound(key);
-  });
-});
+for (var i2 = 0; i2 < soundButtons.length; i2++) {
+  (function (btn) {
+    btn.addEventListener("click", function () {
+      setBackgroundSound(btn.getAttribute("data-sound"));
+    });
+  })(soundButtons[i2]);
+}
 
-// 기본값: 끄기
 setBackgroundSound("none");
