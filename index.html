@@ -24,7 +24,12 @@
         <section class="select-hero">
           <div class="team-logo">
             <div class="team-logo-glow"></div>
-            <img src="logo.png" alt="우리 팀 로고" class="team-logo-img" />
+            <!-- ✅ 투명 배경으로 만든 파일로 변경 -->
+            <img
+              src="logo-transparent.png"
+              alt="우리 팀 로고"
+              class="team-logo-img"
+            />
           </div>
         </section>
 
@@ -83,7 +88,6 @@
           <!-- 왼쪽 장면 -->
           <section class="panel">
             <div class="session-header">
-              <!-- 여기서는 이제 제목/이모지만 -->
               <div class="scene-title">
                 <span id="currentThemeEmoji">🔥</span>
                 <span id="currentThemeName">불멍</span>
@@ -98,53 +102,8 @@
               선택한 테마에 맞는 애니메이션을 여기 표시
             </div>
 
-            <!-- 하단 테마 스트립 (작은 칩들) -->
-            <div class="theme-strip">
-              <button class="control-btn theme-nav-btn" id="prevThemeBtn">
-                ◀ 이전
-              </button>
-
-              <div class="theme-window">
-                <button class="theme-chip" data-key="fire">
-                  <span class="emoji">🔥</span>
-                  <span class="label">불멍</span>
-                </button>
-                <button class="theme-chip" data-key="water">
-                  <span class="emoji">💧</span>
-                  <span class="label">물멍</span>
-                </button>
-                <button class="theme-chip" data-key="rain">
-                  <span class="emoji">🌧</span>
-                  <span class="label">빗소리</span>
-                </button>
-                <button class="theme-chip" data-key="bubble">
-                  <span class="emoji">🫧</span>
-                  <span class="label">버블</span>
-                </button>
-                <button class="theme-chip" data-key="snow">
-                  <span class="emoji">❄️</span>
-                  <span class="label">눈</span>
-                </button>
-                <button class="theme-chip" data-key="leaf">
-                  <span class="emoji">🍂</span>
-                  <span class="label">낙엽</span>
-                </button>
-                <button class="theme-chip" data-key="frost">
-                  <span class="emoji">🧊</span>
-                  <span class="label">성에</span>
-                </button>
-              </div>
-
-              <button class="control-btn theme-nav-btn" id="nextThemeBtn">
-                다음 ▶
-              </button>
-            </div>
-
-            <!-- 👇 이전 버튼: 아래 오른쪽 정렬 -->
-            <div
-              class="session-footer"
-              style="margin-top: 10px; display: flex; justify-content: flex-end"
-            >
+            <!-- 🔥 큰 직사각형(panel)의 오른쪽 아래 “바로 밑”에 붙는 이전 버튼 -->
+            <div class="panel-bottom-right">
               <button id="backToSelect" class="back-btn">이전</button>
             </div>
           </section>
@@ -162,7 +121,8 @@
               <div id="timerDisplay" class="time-display">00:00</div>
               <div class="controls">
                 <button id="timerStartBtn" class="control-btn primary">
-                  시작
+                  <i class="fa-solid fa-play"></i>
+                  <span>시작</span>
                 </button>
                 <button id="timerPauseBtn" class="control-btn">일시정지</button>
                 <button id="timerResetBtn" class="control-btn">초기화</button>
@@ -171,7 +131,6 @@
 
             <section class="control-card">
               <h2>🎵 배경 소리</h2>
-              <!-- 🔥 이 라인(백색소음 / 자연음)은 삭제 -->
               <div class="sound-buttons">
                 <button class="control-btn sound-btn" data-sound="none">
                   끄기
@@ -198,7 +157,7 @@
       </main>
     </div>
 
-    <!-- 디지털 디톡스 세션 모달 (원하면 JS에서 사용) -->
+    <!-- 디지털 디톡스 세션 모달 -->
     <div id="detoxOverlay" class="detox-overlay">
       <div class="detox-dialog">
         <div class="detox-title">디지털 디톡스 세션</div>
