@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비멍 디톡스</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* =========================================
+       1. 기본 설정 및 비멍 배경 스타일
+       ========================================= */
+    body {
+        margin: 0;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #333;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #fff;
+    }
+
+    .window-scene {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background-color: #1a1a2e; 
+        background-image: url('배경3.jpg'); 
+        background-size: cover;
+        background-position: center;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        cursor: pointer;
+        overflow: hidden;
+        user-select: none; 
+    }
+
+    #guideText {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 20px;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        z-index: 90;
+        pointer-events: none;
+        transition: opacity 0.5s;
+    }
+
+    #rainCanvas {
+        position: absolute;
+        top: 0%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 65vw; 
+        height: 180vh; 
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* 반딧불이 */
+    .firefly {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background-color: #ffffcc;
+        border-radius: 50%;
+        box-shadow: 0 0 5px #ffffcc, 0 0 10px #ffdd55;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    @keyframes floatUp {
+        0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+        20% { opacity: 0.8; transform: translate(10px, -20px) scale(1); }
+        80% { opacity: 0.6; }
+        100% { opacity: 0; transform: translate(-20px, -80px) scale(0.2); }
+    }
+
+    /* 화분 */
+    .pot-img {
+        position: absolute;
+        width: 280px;
+        height: 280px; 
+        background-color: transparent; 
+        border: none;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: bottom center;
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 0.5s;
+        transform: translate(-50%, -50%);
+        pointer-events: none; 
+    }
+
+    /* =========================================
+       2. 사이드바 스타일 (자동 숨김 적용)
+       ========================================= */
+    .sidebar-overlay {
+        position: fixed;
+        right: -320px; /* 화면 밖으로 숨김 */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 260px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: right 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* 부드러운 슬라이딩 */
+        padding-left: 20px; /* 마우스 감지 영역 */
+    }
+
+    /* 마우스가 가까이 오면 활성화 */
+    .sidebar-overlay.active {
+        right: 50px;
+    }
+
+    .control-card {
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .control-card h2 {
+        margin: 0 0 4px 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .control-card h2 .emoji { font-size: 1rem; }
+
+    .card-desc {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+    }
+
+    .timer-area {
+        display: flex; flex-direction: column; align-items: center; margin-bottom: 8px;
+    }
+    .timer-inputs {
+        display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;
+    }
+    .timer-inputs input {
+        width: 46px; padding: 4px; border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(0, 0, 0, 0.3); color: #fff;
+        text-align: center; font-size: 0.85rem;
+    }
+    .timer-display {
+        font-size: 1.6rem; font-family: monospace; font-weight: 500;
+        margin: 4px 0 8px 0; letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* === 버튼 스타일 수정 (완전 투명화) === */
+    .btn {
+        width: 100%; padding: 7px 0; margin-bottom: 6px;
+        background: transparent; /* 배경 투명하게 */
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50px; 
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+    }
+    .btn:last-child { margin-bottom: 0; }
+    
+    /* Primary(시작, 잠금) 버튼도 일반 버튼과 똑같이 */
+    .btn.primary {
+        background: transparent; /* 배경색 제거 */
+        border-color: rgba(255, 255, 255, 0.15); /* 테두리도 통일 */
+        color: rgba(255, 255, 255, 0.8);
+    }
+    .btn.primary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+    }
+
+    /* 뒤로가기 버튼은 배경 유지 */
+    .back-btn-container { margin-top: 4px; }
+    .back-btn {
+        width: 100%; padding: 9px;
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px; color: #fff; font-size: 0.85rem;
+        cursor: pointer; text-align: center; transition: 0.2s;
+    }
+    .back-btn:hover { 
+        background: rgba(10, 40, 70, 0.5);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .status-text {
+        font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-top: 6px;
+    }
+
+    .sound-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+</head>
+<body>
+
+    <div class="window-scene" id="scene">
+        <div id="guideText">선반 위를 클릭해 화분을 놓아보세요</div>
+        <canvas id="rainCanvas"></canvas>
+        <div class="pot-img" id="pot"></div>
+    </div>
+
+    <audio id="rainSound" loop>
+        <source src="gentle-rain-07-437321.mp3" type="audio/mp3">
+    </audio>
+    <audio id="alarmSound" src="AlramSound.mp3" preload="auto"></audio>
+
+    <aside class="sidebar-overlay">
+        
+        <section class="control-card">
+            <h2><span class="emoji">⏰</span> 타이머</h2>
+            <div class="card-desc">디톡스 시간 설정</div>
+            
+            <div class="timer-area">
+                <div class="timer-inputs">
+                    <input id="timerMin" type="number" placeholder="분" min="0"> : 
+                    <input id="timerSec" type="number" placeholder="초" min="0">
+                </div>
+                <div id="timerDisplay" class="timer-display">00:00</div>
+            </div>
+
+            <button id="timerStartBtn" class="btn primary">시작</button>
+            <button id="timerPauseBtn" class="btn">일시정지</button>
+            <button id="timerResetBtn" class="btn">초기화</button>
+        </section>
+
+        <section class="control-card">
+            <h2><span class="emoji">🔒</span> 디톡스 잠금</h2>
+            <div class="card-desc">디톡스 세션 동안 방해 금지</div>
+            
+            <button id="detoxLockBtn" class="btn primary">잠금 시작</button>
+            <div id="lockStatus" class="status-text">상태: 대기 중</div>
+        </section>
+
+        <section class="control-card">
+            <h2><span class="emoji">🎵</span> 배경 소리</h2>
+            <button class="btn sound-btn" data-sound="none">끄기</button>
+            <button class="btn sound-btn" data-sound="calm">잔잔하게</button>
+            <button class="btn sound-btn" data-sound="bright">경쾌하게</button>
+        </section>
+
+        <div class="back-btn-container">
+            <button id="backBtn" class="back-btn">← 이전 페이지</button>
+        </div>
+
+    </aside>
+
+<script>
+    /* =====================================
+       0. 사이드바 마우스 감지 (자동 숨김/표시)
+       ===================================== */
+    const sidebar = document.querySelector('.sidebar-overlay');
+    
+    document.addEventListener('mousemove', (e) => {
+        const screenWidth = window.innerWidth;
+        const mouseX = e.clientX;
+        
+        // 화면 오른쪽 끝 100px 이내 or 사이드바 내부
+        const isNearRightEdge = (screenWidth - mouseX) < 100;
+        const isInsideSidebar = sidebar.contains(e.target) || 
+                                (mouseX > (screenWidth - 320));
+
+        if (isNearRightEdge || isInsideSidebar) {
+            sidebar.classList.add('active');
+        } else {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // ========== 1. 비 애니메이션 ==========
+    const canvas = document.getElementById('rainCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const drops = [];
+    const numDrops = 200;
+
+    class Drop {
+        constructor() {
+            this.reset();
+            this.y = Math.random() * canvas.height;
+        }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * -100;
+            this.speed = Math.random() * 4 + 7;
+            this.length = Math.random() * 10 + 10;
+            this.opacity = Math.random() * 0.5 + 0.1;
+        }
+        update() {
+            this.y += this.speed;
+            if (this.y > canvas.height) this.reset();
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(174, 194, 224, ${this.opacity})`;
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x, this.y + this.length);
+            ctx.stroke();
+        }
+    }
+
+    for (let i = 0; i < numDrops; i++) {
+        drops.push(new Drop());
+    }
+
+    function animateRain() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drops.forEach(drop => {
+            drop.update();
+            drop.draw();
+        });
+        requestAnimationFrame(animateRain);
+    }
+    animateRain();
+
+    // ========== 2. 반딧불이 ==========
+    const scene = document.getElementById('scene');
+    function spawnFirefly() {
+        const firefly = document.createElement('div');
+        firefly.classList.add('firefly');
+
+        const rainRect = canvas.getBoundingClientRect();
+        const randomX = rainRect.left + (Math.random() * rainRect.width);
+        const randomY = rainRect.top + (Math.random() * rainRect.height);
+        firefly.style.left = `${randomX}px`;
+        firefly.style.top = `${randomY}px`;
+
+        const duration = 3 + Math.random() * 3;
+        firefly.style.animation = `floatUp ${duration}s ease-out forwards`;
+        scene.appendChild(firefly);
+
+        setTimeout(() => firefly.remove(), duration * 1000);
+    }
+    setInterval(spawnFirefly, 500);
+
+    // ========== 3. 화분 로직 ==========
+    const potImg = document.getElementById('pot'); 
+    const guideText = document.getElementById('guideText');
+    const potImages = ['화분1.png', '화분2.png', '화분3.png'];
+
+    scene.addEventListener('click', (e) => {
+        // 사이드바 클릭 시에는 무시
+        if (e.target.closest('.sidebar-overlay')) return;
+
+        const x = e.clientX;
+        const y = e.clientY;
+        const windowHeight = window.innerHeight;
+        const shelfThreshold = windowHeight * 0.85; 
+
+        if (guideText && guideText.style.opacity !== '0') {
+            guideText.style.opacity = 0;
+        }
+
+        // 화면 아래 15% 정도에만 화분이 놓이도록
+        if (y > shelfThreshold) {
+            const randomIndex = Math.floor(Math.random() * potImages.length);
+            const selectedPot = potImages[randomIndex];
+            potImg.style.backgroundImage = `url('${selectedPot}')`;
+            potImg.style.opacity = 1;
+            potImg.style.left = `${x}px`;
+            potImg.style.top = `${y}px`;
+        }
+    });
+
+    // ========== 4. 타이머 + 디톡스 잠금 ==========
+    let timerInterval = null;
+    let timerRemainingMs = 0;
+    let timerRunning = false;
+    let detoxSessionActive = false;
+
+    const display = document.getElementById('timerDisplay');
+    const minInput = document.getElementById('timerMin');
+    const secInput = document.getElementById('timerSec');
+    const startBtn = document.getElementById('timerStartBtn');
+    const pauseBtn = document.getElementById('timerPauseBtn');
+    const resetBtn = document.getElementById('timerResetBtn');
+    const lockStatus = document.getElementById('lockStatus');
+    const detoxLockBtn = document.getElementById('detoxLockBtn');
+    const alarmSoundEl = document.getElementById('alarmSound');
+
+    // 음수/지수 입력 방지
+    function blockNegative(inputEl) {
+        if (!inputEl) return;
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === '-' || e.key === 'e') {
+                e.preventDefault();
+            }
+        });
+        inputEl.addEventListener('input', () => {
+            let n = parseInt(inputEl.value || '0', 10);
+            if (isNaN(n) || n < 0) n = 0;
+            inputEl.value = n;
+        });
+    }
+    blockNegative(minInput);
+    blockNegative(secInput);
+
+    function formatTime(ms) {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const s = String(totalSec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function updateDisplay() {
+        if (display) display.textContent = formatTime(timerRemainingMs);
+    }
+    updateDisplay();
+
+    function readTimerFromInput() {
+        if (!minInput || !secInput) return 0;
+        const m = parseInt(minInput.value || '0', 10);
+        const s = parseInt(secInput.value || '0', 10);
+        let total = (m * 60 + s) * 1000;
+        if (isNaN(total) || total < 0) total = 0;
+        return total;
+    }
+
+    function updateLockStatus(text) {
+        if (lockStatus) lockStatus.textContent = text;
+    }
+
+    function onTimerFinished() {
+        timerRunning = false;
+        // 알람 재생
+        if (alarmSoundEl) {
+            try {
+                alarmSoundEl.currentTime = 0;
+                const p = alarmSoundEl.play();
+                if (p && typeof p.then === 'function') p.catch(() => {});
+            } catch (e) {}
+        }
+
+        if (detoxSessionActive) {
+            detoxSessionActive = false;
+            updateLockStatus('상태: 완료 (디톡스 세션 종료)');
+            alert('디지털 디톡스 세션이 종료되었습니다.\n천천히 눈을 뜨고, 몸을 가볍게 풀어주세요.');
+        } else {
+            alert('타이머가 종료되었습니다!');
+        }
+
+        if (alarmSoundEl) {
+            alarmSoundEl.pause();
+            alarmSoundEl.currentTime = 0;
+        }
+    }
+
+    function startTimer() {
+        if (timerRunning) return;
+
+        if (timerRemainingMs <= 0) {
+            timerRemainingMs = readTimerFromInput();
+            if (timerRemainingMs <= 0) {
+                alert('분/초를 입력한 뒤 시작을 눌러주세요.');
+                return;
+            }
+        }
+
+        timerRunning = true;
+        const startTime = Date.now();
+        const startRemaining = timerRemainingMs;
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const nextRemaining = startRemaining - elapsed;
+
+            if (nextRemaining <= 0) {
+                timerRemainingMs = 0;
+                updateDisplay();
+                clearInterval(timerInterval);
+                onTimerFinished();
+            } else {
+                timerRemainingMs = nextRemaining;
+                updateDisplay();
+            }
+        }, 200);
+
+        updateDisplay();
+    }
+
+    function pauseTimer() {
+        if (!timerRunning) return;
+        timerRunning = false;
+        clearInterval(timerInterval);
+    }
+
+    function resetTimer() {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        timerRemainingMs = 0;
+        detoxSessionActive = false;
+        updateDisplay();
+        if (minInput) minInput.value = '';
+        if (secInput) secInput.value = '';
+        updateLockStatus('상태: 대기 중');
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            detoxSessionActive = false;
+            updateLockStatus('상태: 대기 중');
+            startTimer();
+        });
+    }
+    if (pauseBtn) pauseBtn.addEventListener('click', pauseTimer);
+    if (resetBtn) resetBtn.addEventListener('click', resetTimer);
+
+    if (detoxLockBtn) {
+        detoxLockBtn.addEventListener('click', () => {
+            if (!timerRunning && timerRemainingMs <= 0) {
+                timerRemainingMs = readTimerFromInput();
+                if (timerRemainingMs <= 0) {
+                    alert('디톡스 세션 전에 타이머 시간을 먼저 설정해 주세요.');
+                    return;
+                }
+            }
+            detoxSessionActive = true;
+            updateLockStatus('상태: 진행 중 (디지털 디톡스 세션)');
+
+            if (!timerRunning) {
+                startTimer();
+            } else {
+                alert('이미 타이머가 실행 중입니다. 현재 타이머가 디톡스 세션으로 사용됩니다.');
+            }
+        });
+    }
+
+    // ========== 5. 비 소리 버튼 로직 ==========
+    const rainSound = document.getElementById('rainSound');
+    const soundBtns = document.querySelectorAll('.sound-btn');
+
+    soundBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 버튼 스타일 active 토글
+            soundBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const type = btn.dataset.sound;
+
+            if (type === 'none') {
+                rainSound.pause();
+            } else {
+                if (type === 'calm') {
+                    rainSound.volume = 0.3;
+                } else {
+                    rainSound.volume = 1.0;
+                }
+                rainSound.play().catch(() => {});
+            }
+        });
+    });
+
+    // ========== 6. 뒤로가기 버튼 ==========
+    document.getElementById('backBtn').addEventListener('click', () => {
+        alert('이전 페이지로 이동합니다.');
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = 'main.html';
+        }
+    });
+</script>
+</body>
+</html>

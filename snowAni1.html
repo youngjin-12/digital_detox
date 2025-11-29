@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>눈멍 디톡스</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* =========================================
+       1. 기본 설정 및 눈멍 배경 스타일
+       ========================================= */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #1b202b;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #fff;
+    }
+
+    .full-screen-bg {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .full-screen-bg::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: url('배경2.png'); 
+        background-size: cover;
+        background-position: center center;
+        transform: scaleX(-1); /* 좌우 반전 유지 */
+        z-index: -1;
+    }
+    
+    .glow-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 60% -10%, rgba(255, 255, 220, 0.1) 0, transparent 50%),
+                    radial-gradient(circle at 80% -10%, rgba(255, 255, 220, 0.1) 0, transparent 50%);
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .snow-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 10;
+    }
+
+    .snowflake {
+        position: absolute;
+        top: -40px;
+        border-radius: 50%;
+        background: white;
+        opacity: 0.8;
+        filter: blur(0.2px);
+        animation-name: fall;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite; 
+    }
+
+    @keyframes fall {
+        0% { transform: translate3d(0, -40px, 0); }
+        100% { transform: translate3d(-10px, 100vh, 0); }
+    }
+
+    .light-beam {
+        position: absolute;
+        background: linear-gradient(to bottom, rgba(255, 245, 160, 0.6) 0%, rgba(255, 245, 160, 0.1) 70%, transparent 100%);
+        mix-blend-mode: screen;
+        z-index: 15;
+        cursor: pointer;
+        animation: flicker 2.5s infinite alternate ease-in-out;
+        transition: opacity 0.5s ease;
+        pointer-events: auto;
+    }
+
+    .light-beam.left {
+        top: 45.4%; left: 10.7%; width: 120px; height: 55vh;
+        clip-path: polygon(20% 0%, 58% 0%, 100% 100%, 0% 100%);
+        transform-origin: top center; transform: rotate(-4deg);
+    }
+
+    .light-beam.right {
+        top: 45.4%; left: 2.2%; width: 120px; height: 55vh;
+        clip-path: polygon(20% 0%, 58% 0%, 100% 100%, 0% 100%);
+        transform-origin: top center; transform: rotate(4deg);
+        animation-delay: 0.3s;
+    }
+
+    .light-beam.off { opacity: 0; animation: none; }
+
+    .big-snowflake {
+        position: absolute;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4M2 12h4M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83M9 12l-3 3M15 12l3 3M15 12l3-3M9 12l-3-3M12 9l-3-3M12 15l-3 3M12 15l3 3M12 9l3-3'/%3E%3C/svg%3E");
+        background-size: contain; background-repeat: no-repeat; background-position: center;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 3px rgba(200, 230, 255, 1));
+        pointer-events: none; z-index: 12;
+        animation: appear-and-fade 3s ease-out forwards;
+    }
+
+    @keyframes appear-and-fade {
+        0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+        20% { opacity: 1; transform: scale(1.1) rotate(45deg); }
+        100% { opacity: 0; transform: scale(0.8) rotate(90deg) translateY(30px); }
+    }
+
+    @keyframes flicker {
+        0%   { opacity: 0.7; filter: blur(0px); }
+        20%  { opacity: 0.5; filter: blur(2px); }
+        40%  { opacity: 0.8; filter: blur(0px); }
+        60%  { opacity: 0.4; filter: blur(3px); }
+        80%  { opacity: 0.7; filter: blur(1px); }
+        100% { opacity: 0.6; filter: blur(2px); }
+    }
+
+    .guide-text {
+        position: absolute; top: 20%; width: 100%; text-align: center;
+        color: #ffffff; font-size: 1.1rem; letter-spacing: 1px;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        pointer-events: none; z-index: 90;
+        transition: opacity 1s ease; opacity: 1; 
+        animation: pulseText 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseText {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .guide-text.hidden { opacity: 0 !important; animation: none; }
+
+    /* =========================================
+       2. 사이드바 스타일 (자동 숨김 적용)
+       ========================================= */
+    .sidebar-overlay {
+        position: fixed;
+        right: -320px; /* 화면 밖으로 숨김 */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 260px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: right 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* 부드러운 슬라이딩 */
+        padding-left: 20px; /* 마우스 감지 영역 */
+    }
+
+    /* 마우스가 가까이 오면 활성화 */
+    .sidebar-overlay.active {
+        right: 50px;
+    }
+
+    .control-card {
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .control-card h2 {
+        margin: 0 0 4px 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .control-card h2 .emoji { font-size: 1rem; }
+
+    .card-desc {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+    }
+
+    .timer-area {
+        display: flex; flex-direction: column; align-items: center; margin-bottom: 8px;
+    }
+    .timer-inputs {
+        display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;
+    }
+    .timer-inputs input {
+        width: 46px; padding: 4px; border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(0, 0, 0, 0.3); color: #fff;
+        text-align: center; font-size: 0.85rem;
+    }
+    .timer-display {
+        font-size: 1.6rem; font-family: monospace; font-weight: 500;
+        margin: 4px 0 8px 0; letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* === 버튼 스타일 수정 (완전 투명화) === */
+    .btn {
+        width: 100%; padding: 7px 0; margin-bottom: 6px;
+        background: transparent; /* 배경 투명하게 */
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50px; 
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+    }
+    .btn:last-child { margin-bottom: 0; }
+    
+    /* Primary(시작, 잠금) 버튼도 일반 버튼과 똑같이 투명하게 */
+    .btn.primary {
+        background: transparent; 
+        border-color: rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    .btn.primary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+    }
+
+    /* 뒤로가기 버튼은 배경 유지 */
+    .back-btn-container { margin-top: 4px; }
+    .back-btn {
+        width: 100%; padding: 9px;
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px; color: #fff; font-size: 0.85rem;
+        cursor: pointer; text-align: center; transition: 0.2s;
+    }
+    .back-btn:hover { 
+        background: rgba(10, 40, 70, 0.5);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .status-text {
+        font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-top: 6px;
+    }
+
+    .sound-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+</head>
+<body>
+
+<div class="full-screen-bg" id="sceneContainer">
+    <div class="glow-overlay"></div>
+    <div class="guide-text" id="guideText">
+        화면을 클릭해보세요. 예쁜 눈 결정이 나타납니다
+    </div>
+
+    <div class="snow-layer" id="snowLayer"></div>
+
+    <div class="light-beam left"></div>
+    <div class="light-beam right"></div>
+</div>
+
+<aside class="sidebar-overlay">
+    <section class="control-card">
+        <h2><span class="emoji">⏰</span> 타이머</h2>
+        <div class="card-desc">디톡스 시간 설정</div>
+        
+        <div class="timer-area">
+            <div class="timer-inputs">
+                <input id="timerMin" type="number" placeholder="분" min="0"> : 
+                <input id="timerSec" type="number" placeholder="초" min="0">
+            </div>
+            <div id="timerDisplay" class="timer-display">00:00</div>
+        </div>
+
+        <button id="timerStartBtn" class="btn primary">시작</button>
+        <button id="timerPauseBtn" class="btn">일시정지</button>
+        <button id="timerResetBtn" class="btn">초기화</button>
+    </section>
+
+    <section class="control-card">
+        <h2><span class="emoji">🔒</span> 디톡스 잠금</h2>
+        <div class="card-desc">디톡스 세션 동안 방해 금지</div>
+        
+        <button id="detoxLockBtn" class="btn primary">잠금 시작</button>
+        <div id="lockStatus" class="status-text">상태: 대기 중</div>
+    </section>
+
+    <section class="control-card">
+        <h2><span class="emoji">🎵</span> 배경 소리</h2>
+        <button class="btn sound-btn" data-sound="none">끄기</button>
+        <button class="btn sound-btn" data-sound="calm">잔잔하게</button>
+        <button class="btn sound-btn" data-sound="bright">경쾌하게</button>
+        
+        <audio id="bgSound" loop preload="auto">
+            <source src="sound-of-falling-snow-211055.mp3" type="audio/mp3">
+        </audio>
+    </section>
+
+    <div class="back-btn-container">
+        <button id="backBtn" class="back-btn">← 이전 페이지</button>
+    </div>
+</aside>
+
+<audio id="alarmSound" src="AlramSound.mp3" preload="auto"></audio>
+
+<script>
+    /* =====================================
+       0. 사이드바 마우스 감지 (자동 숨김/표시)
+       ===================================== */
+    const sidebar = document.querySelector('.sidebar-overlay');
+    
+    document.addEventListener('mousemove', (e) => {
+        const screenWidth = window.innerWidth;
+        const mouseX = e.clientX;
+        
+        // 화면 오른쪽 끝 100px 이내 or 사이드바 내부
+        const isNearRightEdge = (screenWidth - mouseX) < 100;
+        const isInsideSidebar = sidebar.contains(e.target) || 
+                                (mouseX > (screenWidth - 320));
+
+        if (isNearRightEdge || isInsideSidebar) {
+            sidebar.classList.add('active');
+        } else {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // ================= 기존 눈멍 로직 =================
+    const sceneContainer = document.getElementById('sceneContainer');
+    const snowLayer = document.getElementById('snowLayer');
+    const guideText = document.getElementById('guideText'); 
+
+    // 화면 클릭 이벤트 (가이드 숨기기 + 눈 결정 생성)
+    sceneContainer.addEventListener('click', function(e) {
+        if (guideText && !guideText.classList.contains('hidden')) {
+            guideText.classList.add('hidden');
+        }
+        
+        const rect = sceneContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        createBigSnowflake(x, y);
+    });
+
+    function createBigSnowflake(x, y) {
+        const flake = document.createElement('div');
+        flake.classList.add('big-snowflake');
+        
+        const size = 50 + Math.random() * 50; 
+        flake.style.width = size + 'px';
+        flake.style.height = size + 'px';
+        flake.style.left = (x - size / 2) + 'px';
+        flake.style.top = (y - size / 2) + 'px';
+
+        const randomRotation = Math.random() * 360;
+        flake.style.transform = `rotate(${randomRotation}deg)`;
+        flake.style.animationDuration = '3s'; 
+
+        flake.addEventListener('animationend', () => {
+            flake.remove();
+        });
+        snowLayer.appendChild(flake);
+    }
+
+    function createSnowflake(isInitial = false) {
+        const flake = document.createElement('div');
+        flake.classList.add('snowflake');
+
+        const size = 2.5 + Math.random() * 5;
+
+        flake.style.left = Math.random() * 100 + '%';
+        flake.style.width = size + 'px';
+        flake.style.height = size + 'px';
+
+        const duration = 6 + Math.random() * 7; 
+        
+        let delay;
+        if (isInitial) {
+            delay = -(Math.random() * duration); 
+        } else {
+            delay = Math.random() * 2;
+        }
+
+        flake.style.animationDuration = duration + 's';
+        flake.style.animationDelay = delay + 's';
+        flake.style.opacity = 0.4 + Math.random() * 0.6;
+
+        flake.addEventListener('animationend', () => flake.remove());
+        
+        snowLayer.appendChild(flake);
+    }
+
+    // 초기 눈송이 생성
+    for(let i=0; i<30; i++) {
+        createSnowflake(true); 
+    }
+
+    // 지속적 생성 (개수 제한)
+    setInterval(() => {
+        const currentSnowflakes = document.querySelectorAll('.snowflake').length;
+        if (currentSnowflakes < 60) {
+            createSnowflake(false); 
+        }
+    }, 400);
+
+    // 빛줄기 클릭 토글
+    const lightBeams = document.querySelectorAll('.light-beam');
+    lightBeams.forEach(beam => {
+        beam.addEventListener('click', function(e) {
+            e.stopPropagation(); 
+            this.classList.toggle('off');
+        });
+    });
+
+    /* =====================================
+       사이드바 기능 로직
+       (타이머 종료시 알람 + alert 후 알람 멈춤)
+       ===================================== */
+    let timerInterval = null;
+    let timerRemainingMs = 0;
+    let isRunning = false;
+
+    const display = document.getElementById('timerDisplay');
+    const minInput = document.getElementById('timerMin');
+    const secInput = document.getElementById('timerSec');
+    const startBtn = document.getElementById('timerStartBtn');
+    const pauseBtn = document.getElementById('timerPauseBtn');
+    const resetBtn = document.getElementById('timerResetBtn');
+    const lockStatus = document.getElementById('lockStatus');
+
+    const alarmSoundEl = document.getElementById('alarmSound');
+
+    function formatTime(ms) {
+        const totalSec = Math.ceil(ms / 1000);
+        const m = String(Math.floor(totalSec / 60)).padStart(2,'0');
+        const s = String(totalSec % 60).padStart(2,'0');
+        return `${m}:${s}`;
+    }
+
+    function updateDisplay() {
+        display.textContent = formatTime(timerRemainingMs);
+    }
+
+    function readFromInput() {
+        const m = parseInt(minInput.value || "0", 10);
+        const s = parseInt(secInput.value || "0", 10);
+        const total = (m * 60 + s) * 1000;
+        return isNaN(total) || total < 0 ? 0 : total;
+    }
+
+    // 타이머 종료 처리 (알람 + alert + 알람 정지)
+    function handleTimerFinished() {
+        timerRemainingMs = 0;
+        updateDisplay();
+        clearInterval(timerInterval);
+        isRunning = false;
+
+        // 지금 잠금 모드였는지 상태 체크
+        const wasDetox = lockStatus.innerText.includes('잠금 진행 중');
+
+        // 1) 알람 소리 재생
+        if (alarmSoundEl) {
+            try {
+                alarmSoundEl.currentTime = 0;
+                const p = alarmSoundEl.play();
+                if (p && typeof p.then === "function") {
+                    p.catch(() => {});
+                }
+            } catch (e) {}
+        }
+
+        // 2) alert 띄우기
+        if (wasDetox) {
+            alert("디지털 디톡스 세션이 종료되었습니다.\n천천히 눈을 뜨고, 몸을 가볍게 풀어주세요.");
+        } else {
+            alert("타이머 종료!");
+        }
+
+        // 3) alert 확인 후 알람 멈추기
+        if (alarmSoundEl) {
+            alarmSoundEl.pause();
+            alarmSoundEl.currentTime = 0;
+        }
+
+        // 4) 잠금 상태였다면 상태 문구 업데이트
+        if (wasDetox) {
+            lockStatus.innerText = "상태: 완료 (해제됨)";
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        if (isRunning) return;
+        
+        if (timerRemainingMs <= 0) {
+            timerRemainingMs = readFromInput();
+        }
+
+        if (timerRemainingMs <= 0) {
+            alert("시간을 설정해주세요.");
+            return;
+        }
+
+        isRunning = true;
+        const startTime = Date.now();
+        const startRemaining = timerRemainingMs;
+
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            timerRemainingMs = startRemaining - elapsed;
+            
+            if (timerRemainingMs <= 0) {
+                handleTimerFinished();
+            } else {
+                updateDisplay();
+            }
+        }, 100);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+        if(!isRunning) return;
+        clearInterval(timerInterval);
+        isRunning = false;
+    });
+
+    resetBtn.addEventListener('click', () => {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timerRemainingMs = 0;
+        updateDisplay();
+        minInput.value = "";
+        secInput.value = "";
+        lockStatus.innerText = "상태: 대기 중";
+    });
+
+    document.getElementById('detoxLockBtn').addEventListener('click', () => {
+        if (!isRunning) {
+            // 잠금 버튼을 눌렀는데 타이머가 안 돌고 있으면, 먼저 시간 세팅 유도
+            timerRemainingMs = readFromInput();
+            if (timerRemainingMs <= 0) {
+                alert("타이머를 먼저 설정하고 시작해주세요.");
+                return;
+            }
+            // 자동으로 타이머 시작
+            startBtn.click();
+        }
+        lockStatus.innerText = "상태: 🔒 잠금 진행 중";
+    });
+
+    // 소리 버튼 로직 (눈 소리 파일 사용 + 볼륨 조절)
+    const bgSound = document.getElementById('bgSound');
+    const soundBtns = document.querySelectorAll('.sound-btn');
+
+    soundBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 스타일 초기화 후 현재 버튼 active
+            soundBtns.forEach(b => {
+                b.classList.remove('active');
+                // 기존 인라인 스타일 제거 (CSS 클래스 제어로 변경)
+                b.style.backgroundColor = ""; 
+                b.style.borderColor = "";
+            });
+            btn.classList.add('active');
+
+            const type = btn.dataset.sound;
+
+            if(type === 'none') {
+                bgSound.pause();
+            } else {
+                if(type === 'calm') {
+                    bgSound.volume = 0.3; 
+                } else {
+                    bgSound.volume = 1.0; 
+                }
+                bgSound.play().catch(e => console.log('재생 권한 필요'));
+            }
+        });
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+        alert('이전 페이지로 이동합니다.');
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = 'main.html';
+        }
+    });
+</script>
+</body>
+</html>

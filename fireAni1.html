@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>불멍 디톡스</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* =========================================
+       1. 기본 설정 및 배경
+       ========================================= */
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #000;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #fff;
+    }
+
+    .bg-container {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 0;
+    }
+
+    .bg-img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        display: block;
+        opacity: 0.8;
+    }
+
+    .fire-container {
+        position: absolute;
+        width: 750px; height: 900px;
+        top: 37%; left: 48%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .fire-svg { width: 100%; height: 100%; overflow: visible; }
+
+    .flame-layer { transform-origin: 250px 540px; mix-blend-mode: screen; transform: translateY(-100px); }
+    .flameOuter { opacity: 0.55; fill: url(#gradOuter); filter: blur(6px); animation: flickerOuter 4.2s infinite ease-in-out alternate; }
+    .flameMid { opacity: 0.75; fill: url(#gradMid); filter: blur(4px); animation: flickerMid 3.1s infinite ease-in-out alternate-reverse; }
+    .flameInner { opacity: 0.9; fill: url(#gradInner); filter: blur(2px); animation: flickerInner 2.3s infinite ease-in-out alternate; }
+    .flameCore { opacity: 1.0; fill: url(#gradCore); filter: blur(1.5px); animation: flickerCore 1.7s infinite ease-in-out alternate-reverse; }
+
+    @keyframes flickerOuter {
+        0%   { transform: scale(1.00) translateY(0) skewX(0deg); }
+        40%  { transform: scale(1.05, 1.08) translateY(-8px) skewX(1.5deg); }
+        100% { transform: scale(0.97, 1.02) translateY(-4px) skewX(-1deg); }
+    }
+    @keyframes flickerMid {
+        0%   { transform: scale(0.96) translateY(0); }
+        50%  { transform: scale(1.02, 1.06) translateY(-10px); }
+        100% { transform: scale(0.94, 1.0) translateY(-5px); }
+    }
+    @keyframes flickerInner {
+        0%   { transform: translateX(15px) scale(0.95) translateY(0); }
+        100% { transform: translateX(15px) scale(0.90, 0.97) translateY(-6px); }
+    }
+    @keyframes flickerCore {
+        0%   { transform: translateX(15px) scale(0.72) translateY(0); }
+        100% { transform: translateX(15px) scale(0.67, 0.72) translateY(-4px); }
+    }
+
+    .ember {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        animation: riseAndFade var(--rise-duration, 3s) linear forwards;
+        box-shadow: 0 0 4px currentColor;
+        z-index: 15;
+    }
+    @keyframes riseAndFade {
+        0%   { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateX(var(--dest-x, 20px)) translateY(var(--dest-y, -200px)) scale(0.2); }
+    }
+
+    /* =========================================
+       2. 사이드바 (숨김 및 애니메이션 처리)
+       ========================================= */
+    .sidebar-overlay {
+        position: fixed;
+        right: -320px; /* 화면 밖으로 완전히 숨김 */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 260px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: right 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        padding-left: 20px;
+    }
+
+    .sidebar-overlay.active {
+        right: 50px;
+    }
+
+    .control-card {
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .control-card h2 {
+        margin: 0 0 4px 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .control-card h2 .emoji { font-size: 1rem; }
+
+    .card-desc {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+    }
+
+    .timer-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .timer-inputs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .timer-inputs input {
+        width: 46px;
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    .timer-display {
+        font-size: 1.6rem;
+        font-family: monospace;
+        font-weight: 500;
+        margin: 4px 0 8px 0;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* === 버튼 스타일 (일반) === */
+    .btn {
+        width: 100%;
+        padding: 8px 0;
+        margin-bottom: 6px;
+        background: transparent; /* 투명 */
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+    }
+    .btn:last-child { margin-bottom: 0; }
+
+    /* === 이전 페이지 버튼 (복구) === */
+    .back-btn-container { margin-top: 4px; }
+    .back-btn {
+        width: 100%;
+        padding: 9px;
+        /* 아까 처음 요청 주신 코드의 스타일로 복구: 어두운 배경 */
+        background: rgba(0, 20, 40, 0.30);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        color: #fff;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-align: center;
+        transition: 0.2s;
+    }
+    .back-btn:hover { 
+        background: rgba(10, 40, 70, 0.5);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .status-text {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 6px;
+    }
+
+    .sound-btn.active {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: #fff;
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+</style>
+</head>
+<body>
+
+    <div class="bg-container">
+        <img src="배경6.png" alt="캠핑 배경" class="bg-img">
+    </div>
+
+    <div class="fire-container">
+        <svg viewBox="0 0 500 700" class="fire-svg">
+            <defs>
+                <filter id="softWobble">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.018 0.045" numOctaves="3" seed="3" result="noise"/>
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="28" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+                <radialGradient id="gradOuter" cx="50%" cy="80%" r="70%">
+                    <stop offset="0%" stop-color="#ff9f43"/>
+                    <stop offset="40%" stop-color="#ff6b1a"/>
+                    <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                </radialGradient>
+                <radialGradient id="gradMid" cx="50%" cy="80%" r="60%">
+                    <stop offset="0%" stop-color="#ffe08a"/>
+                    <stop offset="45%" stop-color="#ff9f43"/>
+                    <stop offset="100%" stop-color="#ff6b1a"/>
+                </radialGradient>
+                <radialGradient id="gradInner" cx="50%" cy="80%" r="50%">
+                    <stop offset="0%" stop-color="#fff8d6"/>
+                    <stop offset="40%" stop-color="#ffe38a"/>
+                    <stop offset="100%" stop-color="#ffb347"/>
+                </radialGradient>
+                <radialGradient id="gradCore" cx="50%" cy="80%" r="40%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="45%" stop-color="#fff8d6"/>
+                    <stop offset="100%" stop-color="#ffe08a"/>
+                </radialGradient>
+                <radialGradient id="massiveGlow" cx="50%" cy="75%" r="60%">
+                    <stop offset="0%" stop-color="rgba(255, 140, 60, 0.75)"/>
+                    <stop offset="55%" stop-color="rgba(255, 80, 10, 0.20)"/>
+                    <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
+                </radialGradient>
+                <path id="flameOuterShape" d="M 250 560 C 205 555, 160 530, 135 500 C 110 470, 95 440, 95 400 C 95 360, 110 330, 130 310 C 150 290, 165 280, 175 255 C 190 220, 195 190, 210 165 C 225 140, 240 125, 250 105 C 260 125, 275 140, 290 165 C 305 190, 310 220, 325 255 C 335 280, 350 290, 370 310 C 390 330, 405 360, 405 400 C 405 440, 390 470, 365 500 C 340 530, 295 555, 250 560 Z"/>
+                <path id="flameMidShape" d="M 250 545 C 215 540, 185 520, 165 495 C 145 470, 140 440, 140 410 C 140 380, 155 355, 175 335 C 190 320, 205 305, 215 280 C 225 255, 230 230, 245 205 C 255 190, 265 190, 275 205 C 290 230, 300 255, 310 280 C 320 305, 335 320, 350 335 C 370 355, 385 380, 385 410 C 385 440, 380 470, 360 495 C 335 520, 295 540, 250 545 Z"/>
+                <path id="flameInnerShape" d="M 250 530 C 225 525, 205 510, 190 490 C 175 470, 170 445, 170 420 C 170 395, 180 375, 195 360 C 210 345, 225 330, 235 310 C 245 295, 250 285, 255 310 C 265 330, 275 345, 290 360 C 305 375, 315 395, 315 420 C 315 445, 305 470, 290 490 C 275 510, 255 525, 250 530 Z"/>
+                <path id="flameCoreShape" d="M 250 515 C 230 510, 218 498, 208 485 C 200 472, 197 457, 197 440 C 197 423, 205 408, 215 397 C 225 386, 235 375, 240 360 C 247 345, 250 335, 255 360 C 260 375, 270 386, 280 397 C 290 408, 300 423, 300 440 C 300 457, 295 472, 285 485 C 270 498, 260 510, 250 515 Z"/>
+            </defs>
+
+            <circle cx="250" cy="520" r="260" fill="url(#massiveGlow)" />
+
+            <g filter="url(#softWobble)">
+                <use href="#flameOuterShape" class="flame-layer flameOuter" />
+                <use href="#flameMidShape"   class="flame-layer flameMid" />
+                <use href="#flameInnerShape" class="flame-layer flameInner" />
+                <use href="#flameCoreShape"  class="flame-layer flameCore" />
+            </g>
+        </svg>
+    </div>
+
+    <aside class="sidebar-overlay">
+        <section class="control-card">
+            <h2><span class="emoji">⏰</span> 타이머</h2>
+            <div class="card-desc">디톡스 시간 설정</div>
+            <div class="timer-area">
+                <div class="timer-inputs">
+                    <input id="timerMin" type="number" placeholder="분" min="0"> : 
+                    <input id="timerSec" type="number" placeholder="초" min="0">
+                </div>
+                <div id="timerDisplay" class="timer-display">00:00</div>
+            </div>
+            <button id="timerStartBtn" class="btn primary">시작</button>
+            <button id="timerPauseBtn" class="btn">일시정지</button>
+            <button id="timerResetBtn" class="btn">초기화</button>
+        </section>
+
+        <section class="control-card">
+            <h2><span class="emoji">🔒</span> 디톡스 잠금</h2>
+            <div class="card-desc">디톡스 세션 동안 방해 금지</div>
+            <button id="detoxLockBtn" class="btn primary">잠금 시작</button>
+            <div id="lockStatus" class="status-text">상태: 대기 중</div>
+        </section>
+
+        <section class="control-card">
+            <h2><span class="emoji">🎵</span> 배경 소리</h2>
+            <button class="btn sound-btn" data-sound="none">끄기</button>
+            <button class="btn sound-btn" data-sound="calm">잔잔하게</button>
+            <button class="btn sound-btn" data-sound="bright">경쾌하게</button>
+            <audio id="bgSound" loop preload="auto"></audio>
+        </section>
+
+        <div class="back-btn-container">
+            <button id="backBtn" class="back-btn">← 이전 페이지</button>
+        </div>
+    </aside>
+
+    <audio id="alarmSound" src="AlramSound.mp3" preload="auto"></audio>
+
+<script>
+    /* =====================================
+       0. 사이드바 마우스 감지 (자동 숨김/표시)
+       ===================================== */
+    const sidebar = document.querySelector('.sidebar-overlay');
+    
+    document.addEventListener('mousemove', (e) => {
+        const screenWidth = window.innerWidth;
+        const mouseX = e.clientX;
+        
+        // 화면 오른쪽 끝 100px 이내 or 사이드바 내부
+        const isNearRightEdge = (screenWidth - mouseX) < 100;
+        const isInsideSidebar = sidebar.contains(e.target) || 
+                                (mouseX > (screenWidth - 320));
+
+        if (isNearRightEdge || isInsideSidebar) {
+            sidebar.classList.add('active');
+        } else {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    /* =====================================
+       1. 불멍 잔불(ember) 애니메이션
+       ===================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+        const fireContainer = document.querySelector('.fire-container');
+        const emberColors = ['#ff9f43', '#ff6b1a', '#ffe08a', '#ffffff', '#ff4500', '#ffcc00'];
+
+        function createEmber(mouseX = null, mouseY = null) {
+            const ember = document.createElement('div');
+            ember.classList.add('ember');
+
+            let size, destX, destY, duration;
+
+            if (mouseX !== null && mouseY !== null) {
+                size = Math.random() * 6 + 4;
+                const rect = fireContainer.getBoundingClientRect();
+                ember.style.left = `${mouseX - rect.left}px`;
+                ember.style.top = `${mouseY - rect.top}px`;
+                destX = (Math.random() - 0.5) * 200 + 'px';
+                destY = (Math.random() * -150 - 50) + 'px';
+                duration = (Math.random() * 1 + 1.2) + 's';
+            } else {
+                size = Math.random() * 4 + 2;
+                const centerX = 375;
+                const spreadX = (Math.random() - 0.5) * 140;
+                ember.style.left = `${centerX + spreadX}px`;
+                const startBottom = 200 + Math.random() * 50;
+                ember.style.bottom = `${startBottom}px`;
+                ember.style.top = 'auto';
+                destX = (Math.random() - 0.5) * 300 + 'px';
+                destY = -(Math.random() * 400 + 300) + 'px';
+                duration = (Math.random() * 2 + 2.5) + 's';
+            }
+
+            ember.style.width = `${size}px`;
+            ember.style.height = `${size}px`;
+            const color = emberColors[Math.floor(Math.random() * emberColors.length)];
+            ember.style.backgroundColor = color;
+            ember.style.color = color;
+            ember.style.setProperty('--dest-x', destX);
+            ember.style.setProperty('--dest-y', destY);
+            ember.style.setProperty('--rise-duration', duration);
+
+            fireContainer.appendChild(ember);
+            setTimeout(() => { ember.remove(); }, parseFloat(duration) * 1000);
+        }
+
+        setInterval(() => {
+            if (!document.hidden) createEmber();
+        }, 80);
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.sidebar-overlay')) return;
+            const burstCount = 10;
+            for (let i = 0; i < burstCount; i++) {
+                setTimeout(() => {
+                    createEmber(e.clientX, e.clientY);
+                }, i * 30);
+            }
+        });
+    });
+
+    /* =====================================
+       2. 타이머 + 디톡스 잠금 로직
+       ===================================== */
+    let timerInterval = null;
+    let timerRemainingMs = 0;
+    let timerRunning = false;
+    let detoxSessionActive = false;
+
+    const display = document.getElementById('timerDisplay');
+    const minInput = document.getElementById('timerMin');
+    const secInput = document.getElementById('timerSec');
+    const startBtn = document.getElementById('timerStartBtn');
+    const pauseBtn = document.getElementById('timerPauseBtn');
+    const resetBtn = document.getElementById('timerResetBtn');
+    const lockStatus = document.getElementById('lockStatus');
+    const detoxLockBtn = document.getElementById('detoxLockBtn');
+    const alarmSoundEl = document.getElementById('alarmSound');
+
+    function blockNegative(inputEl) {
+        if (!inputEl) return;
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === '-' || e.key === 'e') {
+                e.preventDefault();
+            }
+        });
+        inputEl.addEventListener('input', () => {
+            let n = parseInt(inputEl.value || '0', 10);
+            if (isNaN(n) || n < 0) n = 0;
+            inputEl.value = n;
+        });
+    }
+    blockNegative(minInput);
+    blockNegative(secInput);
+
+    function formatTime(ms) {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const s = String(totalSec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function updateDisplay() {
+        if (display) display.textContent = formatTime(timerRemainingMs);
+    }
+    updateDisplay();
+
+    function readTimerFromInput() {
+        if (!minInput || !secInput) return 0;
+        const m = parseInt(minInput.value || '0', 10);
+        const s = parseInt(secInput.value || '0', 10);
+        let total = (m * 60 + s) * 1000;
+        if (isNaN(total) || total < 0) total = 0;
+        return total;
+    }
+
+    function updateLockStatus(text) {
+        if (lockStatus) lockStatus.textContent = text;
+    }
+
+    function onTimerFinished() {
+        timerRunning = false;
+        if (alarmSoundEl) {
+            try {
+                alarmSoundEl.currentTime = 0;
+                const p = alarmSoundEl.play();
+                if (p && typeof p.then === 'function') p.catch(() => {});
+            } catch (e) {}
+        }
+
+        if (detoxSessionActive) {
+            detoxSessionActive = false;
+            updateLockStatus('상태: 완료 (디톡스 세션 종료)');
+            alert('디지털 디톡스 세션이 종료되었습니다.\n천천히 눈을 뜨고, 몸을 가볍게 풀어주세요.');
+        } else {
+            alert('타이머가 종료되었습니다!');
+        }
+
+        if (alarmSoundEl) {
+            alarmSoundEl.pause();
+            alarmSoundEl.currentTime = 0;
+        }
+    }
+
+    function startTimer() {
+        if (timerRunning) return;
+        if (timerRemainingMs <= 0) {
+            timerRemainingMs = readTimerFromInput();
+            if (timerRemainingMs <= 0) {
+                alert('분/초를 입력한 뒤 시작을 눌러주세요.');
+                return;
+            }
+        }
+        timerRunning = true;
+        const startTime = Date.now();
+        const startRemaining = timerRemainingMs;
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const nextRemaining = startRemaining - elapsed;
+            if (nextRemaining <= 0) {
+                timerRemainingMs = 0;
+                updateDisplay();
+                clearInterval(timerInterval);
+                onTimerFinished();
+            } else {
+                timerRemainingMs = nextRemaining;
+                updateDisplay();
+            }
+        }, 200);
+        updateDisplay();
+    }
+
+    function pauseTimer() {
+        if (!timerRunning) return;
+        timerRunning = false;
+        clearInterval(timerInterval);
+    }
+
+    function resetTimer() {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        timerRemainingMs = 0;
+        detoxSessionActive = false;
+        updateDisplay();
+        if (minInput) minInput.value = '';
+        if (secInput) secInput.value = '';
+        updateLockStatus('상태: 대기 중');
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            detoxSessionActive = false;
+            updateLockStatus('상태: 대기 중');
+            startTimer();
+        });
+    }
+    if (pauseBtn) pauseBtn.addEventListener('click', pauseTimer);
+    if (resetBtn) resetBtn.addEventListener('click', resetTimer);
+
+    if (detoxLockBtn) {
+        detoxLockBtn.addEventListener('click', () => {
+            if (!timerRunning && timerRemainingMs <= 0) {
+                timerRemainingMs = readTimerFromInput();
+                if (timerRemainingMs <= 0) {
+                    alert('디톡스 세션 전에 타이머 시간을 먼저 설정해 주세요.');
+                    return;
+                }
+            }
+            detoxSessionActive = true;
+            updateLockStatus('상태: 진행 중 (디지털 디톡스 세션)');
+            if (!timerRunning) {
+                startTimer();
+            } else {
+                alert('이미 타이머가 실행 중입니다. 현재 타이머가 디톡스 세션으로 사용됩니다.');
+            }
+        });
+    }
+
+    /* =====================================
+       3. 배경 불소리 버튼 로직
+       ===================================== */
+    const bgSound = document.getElementById('bgSound');
+    const soundBtns = document.querySelectorAll('.sound-btn');
+    const soundSrc = "fire-sound-334130.mp3"; 
+
+    soundBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            soundBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const type = btn.dataset.sound;
+            if (type === 'none') {
+                bgSound.pause();
+                bgSound.currentTime = 0;
+                return;
+            }
+
+            if (!bgSound.src) {
+                bgSound.src = soundSrc;
+            }
+
+            if (type === 'calm') {
+                bgSound.volume = 0.3;
+            } else {
+                bgSound.volume = 1.0;
+            }
+
+            bgSound.play().catch(() => {});
+        });
+    });
+
+    /* =====================================
+       4. 뒤로가기 버튼
+       ===================================== */
+    document.getElementById('backBtn').addEventListener('click', () => {
+        alert('이전 페이지로 이동합니다.');
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = 'main.html';
+        }
+    });
+</script>
+</body>
+</html>

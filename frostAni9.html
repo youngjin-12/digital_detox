@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Winter Window - Interactive Frost</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --border: rgba(255, 255, 255, 0.2);
+      --fg: #f9fafb;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.18);
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #151f6a;
+      user-select: none;
+      cursor: default;
+    }
+
+    /* 오른쪽 패널 레이아웃 (수정됨: 숨김 기능 추가) */
+    .main-layout {
+      position: absolute;
+      right: -320px; /* 화면 밖으로 숨김 */
+      top: 50%;
+      transform: translateY(-50%);
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 20;
+      transition: right 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* 부드러운 슬라이딩 */
+      padding-left: 20px; /* 마우스 감지 영역 */
+    }
+
+    /* 마우스가 가까이 오면 나타나는 클래스 */
+    .main-layout.active {
+      right: 40px;
+    }
+
+    .control-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 12px 14px 14px;
+      background: rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+      color: var(--fg);
+    }
+
+    .control-card h2 {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      margin-bottom: 6px;
+    }
+
+    .control-btn, .back-btn {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--fg);
+      font-size: 0.80rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .control-btn:hover,
+    .back-btn:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .control-btn:active,
+    .start-btn:active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .sound-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sound-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .timer-inputs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .timer-inputs input {
+      width: 52px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.35);
+      color: var(--fg);
+      text-align: center;
+    }
+
+    .time-display {
+      font-family: ui-monospace;
+      font-size: 1.6rem;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .lock-status {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      opacity: 0.85;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .controls .control-btn { width: 100%; }
+
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: #151f6a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .side-decor { position: absolute; top: 0; bottom: 0; width: 60px; }
+    .side-decor.left  { left: 0; }
+    .side-decor.right { right: 0; }
+    .side-line {
+      position: absolute; left: 50%; top: 0; bottom: 0; width: 4px;
+      transform: translateX(-50%); background: #111960;
+    }
+    .side-dot {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      width: 10px; height: 10px; border-radius: 50%; background: #38a3ff;
+      box-shadow: 0 0 5px rgba(56, 163, 255, 0.5);
+    }
+    .side-dot:nth-child(2) { top: 12%; background:#1f4dff; }
+    .side-dot:nth-child(3) { top: 28%; background:#5bc0ff; }
+    .side-dot:nth-child(4) { top: 45%; background:#1f4dff; }
+    .side-dot:nth-child(5) { top: 62%; background:#5bc0ff; }
+    .side-dot:nth-child(6) { top: 78%; background:#1f4dff; }
+
+    .window-wrap {
+      position: relative;
+      width: 70vw;
+      max-width: 1100px;
+      aspect-ratio: 16 / 9;
+      background: #151f6a;
+      box-shadow: 0 25px 40px rgba(0,0,0,0.6);
+      margin-right: 140px;
+    }
+
+    .sill {
+      position: absolute; left: -8%; right: -8%; bottom: -18%; height: 22%;
+      background: #102666; border-radius: 0 0 14px 14px;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.75);
+      z-index: 10;
+    }
+    .sill::before {
+      content: ""; position: absolute; left: 6%; right: 6%; top: -22px; height: 24px;
+      background: #1a3a86; border-radius: 14px 14px 0 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+    }
+    .sill::after {
+      content: ""; position: absolute; inset: 0 4% 8%;
+      background: linear-gradient(to bottom, #17337b 0, #0d2150 100%);
+      border-radius: 0 0 12px 12px; opacity: 0.85;
+    }
+
+    .window-frame {
+      position: absolute; inset: 0; padding: 5%; background: #050a2c;
+    }
+
+    .window-inner {
+      position: relative; width: 100%; height: 100%;
+      background: #101f7c; overflow: hidden;
+      box-shadow: inset 0 0 0 10px #192b82, inset 0 0 40px rgba(0,0,0,0.7);
+    }
+
+    .frame-border {
+      position: absolute; inset: 0; box-shadow: inset 0 0 0 22px #23338f;
+      pointer-events: none; z-index: 20;
+    }
+
+    .frame-bar-h, .frame-bar-v {
+      position: absolute; background: #121b63; z-index: 20;
+      box-shadow: 0 0 0 3px rgba(7,10,40,0.7), 0 0 8px rgba(0,0,0,0.8);
+    }
+    .frame-bar-h { left: 0; right: 0; height: 14px; top: 50%; transform: translateY(-50%); }
+    .frame-bar-v { top: 0; bottom: 0; width: 14px; left: 50%; transform: translateX(-50%); }
+
+    .sky {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, #163b9b 0, #131f6d 50%, #0e1550 100%);
+      z-index: 1;
+    }
+
+    .star {
+      position: absolute; width: 3px; height: 3px;
+      border-radius: 50%; background: #fff; opacity: 0.9;
+      animation: twinkle 3s infinite ease-in-out alternate;
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.3; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
+    }
+    .star.s1 { top: 12%; left: 20%; animation-delay: 0s; }
+    .star.s2 { top: 18%; left: 45%; animation-delay: 0.5s; }
+    .star.s3 { top: 10%; left: 60%; animation-delay: 1s; }
+    .star.s4 { top: 24%; left: 70%; animation-delay: 1.5s; }
+    .star.s5 { top: 30%; left: 35%; animation-delay: 0.2s; }
+    .star.s6 { top: 16%; left: 80%; animation-delay: 0.7s; }
+    .star.s7 { top: 26%; left: 52%; animation-delay: 1.2s; }
+    .star.s8 { top: 34%; left: 58%; animation-delay: 0.4s; }
+    .star.s9 { top: 20%; left: 30%; animation-delay: 0.9s; }
+    .star.s10{ top: 28%; left: 25%; animation-delay: 1.8s; }
+    .star.s11{ top: 32%; left: 75%; animation-delay: 0.3s; }
+    .star.s12{ top: 14%; left: 55%; animation-delay: 1.1s; }
+
+    .building {
+      position: absolute; bottom: 24%; width: 80px; height: 140px;
+      background: linear-gradient(to top, #1a2560, #26357c);
+      z-index: 2; overflow: hidden;
+    }
+    .building::before {
+      content: ""; position: absolute; inset: 14px 10px;
+      background-image: linear-gradient(#111b4d 2px, transparent 2px),
+                        linear-gradient(90deg, #111b4d 2px, transparent 2px);
+      background-size: 10px 10px; opacity: 0.7;
+    }
+    .building::after {
+      content: ""; position: absolute; width: 100%; height: 100%;
+      background-image: radial-gradient(circle at 20% 30%, #ffd166 2px, transparent 4px),
+                        radial-gradient(circle at 60% 55%, #ffe28f 2px, transparent 4px);
+      opacity: 0.7;
+    }
+    .building.b1 { left: 12%; height: 130px; }
+    .building.b2 { left: 22%; width: 70px; height: 110px; background: linear-gradient(to top,#151f57,#202f73);}
+    .building.b3 { left: 30%; width: 60px; height: 90px; background: linear-gradient(to top,#11194d,#1c2965);}
+
+    .hills {
+      position: absolute; left: -10%; right: -10%; bottom: 20%; height: 40%;
+      background:
+        radial-gradient(circle at 20% 100%, #102a75 30%, transparent 60%),
+        radial-gradient(circle at 60% 100%, #0f2365 35%, transparent 65%),
+        radial-gradient(circle at 90% 100%, #0c1c55 30%, transparent 60%);
+      opacity: 0.9; z-index: 1.5;
+    }
+    .pine-far {
+      position: absolute; bottom: 22%; width: 0; height: 0; border-style: solid; z-index: 2;
+    }
+    .pine-far.p1 { left: 40%; border-width: 80px 20px 0 20px; border-color: #12357c transparent transparent transparent; }
+    .pine-far.p2 { left: 52%; border-width: 100px 24px 0 24px; border-color: #0f2a6a transparent transparent transparent; }
+    .pine-far.p3 { left: 67%; border-width: 90px 22px 0 22px; border-color: #12357c transparent transparent transparent; }
+    .pine-far.p4 { left: 80%; border-width: 70px 18px 0 18px; border-color: #0f2a6a transparent transparent transparent; }
+
+    .tree-round {
+      position: absolute; bottom: 23%; left: 57%; width: 120px; height: 120px;
+      border-radius: 50%; background: #0f3f8e; z-index: 3;
+    }
+    .tree-round::before { content: ""; position: absolute; bottom: -40px; left: 52%; width: 6px; height: 50px; background: #19386f; transform: translateX(-50%); }
+    .tree-round::after { content: ""; position: absolute; right: -40px; top: 35px; width: 70px; height: 70px; border-radius: 50%; background: #0d3479; }
+
+    .tree-snow { position: absolute; right: -2%; bottom: 10%; width: 190px; height: 230px; z-index: 3; }
+    .tree-snow-layer { position: absolute; right: 0; width: 120%; height: 60px; background: #f3fbff; border-radius: 45px 0 0 45px; }
+    .tree-snow-layer.l1 { bottom: 0; }
+    .tree-snow-layer.l2 { bottom: 45px; }
+    .tree-snow-layer.l3 { bottom: 90px; }
+    .tree-snow-layer.l4 { bottom: 135px; width: 90%; }
+    .tree-snow-layer.l5 { bottom: 170px; width: 70%; }
+
+    .tree-branch { position: absolute; width: 4px; background: #f0f6ff; z-index: 4; }
+    .tree-branch.right-main { bottom: 24%; left: 68%; height: 150px; }
+    .tree-branch.right-main::before,
+    .tree-branch.right-main::after {
+      content: ""; position: absolute; width: 4px; height: 60px; background: #f0f6ff;
+    }
+    .tree-branch.right-main::before { top: 30px; left: -26px; transform: rotate(-35deg); }
+    .tree-branch.right-main::after  { top: 70px; left: 16px; transform: rotate(30deg); }
+
+    .tree-branch.left-main { bottom: 30%; left: 22%; height: 135px; }
+    .tree-branch.left-main::before,
+    .tree-branch.left-main::after {
+      content: ""; position: absolute; width: 4px; height: 60px; background: #f0f6ff;
+    }
+    .tree-branch.left-main::before { top: 20px; right: -30px; transform: rotate(26deg); }
+    .tree-branch.left-main::after  { top: 70px; right: -42px; transform: rotate(28deg); }
+
+    .snow-ground {
+      position: absolute; left: -5%; right: -5%; bottom: 8%; height: 22%;
+      background: #e7f5ff; border-radius: 50% 50% 0 0; z-index: 2;
+    }
+
+    .shelf { position: absolute; left: 0; top: 35%; width: 80px; height: 8px; background: #0d1540; }
+    .shelf::before, .shelf::after { content: ""; position: absolute; bottom: 8px; width: 16px; height: 40px; background: #1d2973; }
+    .shelf::before { left: 10px; }
+    .shelf::after  { left: 32px; }
+    .panel-right { position: absolute; right: 0; top: 40%; width: 60px; height: 80px; background: #0d1540; }
+    .panel-right::before { content: ""; position: absolute; left: 14px; top: 18px; width: 30px; height: 40px; background: #1d2973; }
+
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 5;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) translateX(0); }
+      100% { transform: translateY(110vh) translateX(20px); }
+    }
+
+    #frostCanvas {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      cursor: crosshair;
+    }
+    #frostCanvas.active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="side-decor left">
+      <div class="side-line"></div>
+      <div class="side-dot"></div><div class="side-dot"></div><div class="side-dot"></div>
+      <div class="side-dot"></div><div class="side-dot"></div><div class="side-dot"></div>
+    </div>
+    <div class="side-decor right">
+      <div class="side-line"></div>
+      <div class="side-dot"></div><div class="side-dot"></div><div class="side-dot"></div>
+      <div class="side-dot"></div><div class="side-dot"></div><div class="side-dot"></div>
+    </div>
+
+    <div class="shelf"></div><div class="panel-right"></div>
+
+    <div class="window-wrap">
+      <div class="window-frame">
+        <div class="window-inner" id="window-area">
+          <div class="sky"></div>
+          <div class="star s1"></div><div class="star s2"></div><div class="star s3"></div><div class="star s4"></div>
+          <div class="star s5"></div><div class="star s6"></div><div class="star s7"></div><div class="star s8"></div>
+          <div class="star s9"></div><div class="star s10"></div><div class="star s11"></div><div class="star s12"></div>
+          <div class="hills"></div>
+          <div class="building b1"></div><div class="building b2"></div><div class="building b3"></div>
+          <div class="pine-far p1"></div><div class="pine-far p2"></div><div class="pine-far p3"></div><div class="pine-far p4"></div>
+          <div class="tree-round"></div>
+          <div class="tree-snow">
+            <div class="tree-snow-layer l1"></div>
+            <div class="tree-snow-layer l2"></div>
+            <div class="tree-snow-layer l3"></div>
+            <div class="tree-snow-layer l4"></div>
+            <div class="tree-snow-layer l5"></div>
+          </div>
+          <div class="tree-branch left-main"></div>
+          <div class="tree-branch right-main"></div>
+          <div class="snow-ground"></div>
+          <canvas id="frostCanvas"></canvas>
+
+          <div class="frame-border"></div>
+          <div class="frame-bar-h"></div>
+          <div class="frame-bar-v"></div>
+        </div>
+      </div>
+      <div class="sill"></div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <section class="control-card">
+      <h2>⏰ 타이머</h2>
+      <div class="label">디톡스 시간 설정</div>
+      <div class="timer-inputs">
+        <input id="timerMin" type="number" placeholder="분" />
+        :
+        <input id="timerSec" type="number" placeholder="초" />
+      </div>
+      <div id="timerDisplay" class="time-display">00:00</div>
+      <div class="controls">
+        <button id="timerStartBtn" class="control-btn start-btn">시작</button>
+        <button id="timerPauseBtn" class="control-btn">일시정지</button>
+        <button id="timerResetBtn" class="control-btn">초기화</button>
+      </div>
+    </section>
+
+    <section class="control-card">
+      <h2>🔒 디톡스 잠금</h2>
+      <p class="label">디톡스 세션 동안 방해 금지</p>
+      <button id="detoxLockBtn" class="control-btn">잠금 시작</button>
+      <div id="lockStatus" class="lock-status">상태: 대기 중</div>
+    </section>
+
+    <section class="control-card">
+      <h2>🎵 배경 소리</h2>
+      <div class="sound-buttons">
+        <button class="control-btn sound-btn" data-sound="none">끄기</button>
+        <button class="control-btn sound-btn" data-sound="calm">잔잔하게</button>
+        <button class="control-btn sound-btn" data-sound="bright">경쾌하게</button>
+      </div>
+    </section>
+
+    <button id="backToSelect" class="back-btn">← 이전 페이지</button>
+  </div>
+
+  <audio id="wipeSound" src="frostAniSound2.mp3" preload="auto"></audio>
+  <audio id="bgSound" loop preload="auto"></audio>
+  <audio id="alarmSound" src="AlramSound.mp3" preload="auto"></audio>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      
+      /* ======================
+         0. 사이드바 자동 숨김/표시 로직 (추가됨)
+         ====================================== */
+      const sidebar = document.querySelector('.main-layout');
+      
+      document.addEventListener('mousemove', (e) => {
+          const screenWidth = window.innerWidth;
+          const mouseX = e.clientX;
+          
+          // 화면 오른쪽 끝 100px 이내 or 사이드바 내부
+          const isNearRightEdge = (screenWidth - mouseX) < 100;
+          const isInsideSidebar = sidebar.contains(e.target) || 
+                                  (mouseX > (screenWidth - 320));
+
+          if (isNearRightEdge || isInsideSidebar) {
+              sidebar.classList.add('active');
+          } else {
+              sidebar.classList.remove('active');
+          }
+      });
+
+      /* ======================
+         1. 타이머 + 디톡스
+         ====================== */
+
+      var timerMinInput = document.getElementById("timerMin");
+      var timerSecInput = document.getElementById("timerSec");
+      var timerDisplay = document.getElementById("timerDisplay");
+
+      var timerStartBtn = document.getElementById("timerStartBtn");
+      var timerPauseBtn = document.getElementById("timerPauseBtn");
+      var timerResetBtn = document.getElementById("timerResetBtn");
+
+      var timerInterval = null;
+      var timerRemainingMs = 0;
+      var timerRunning = false;
+
+      // ⏰ 타이머 알람 오디오
+      var alarmSoundEl = document.getElementById("alarmSound");
+
+      // 🔒 음수 입력 방지 함수
+      function blockNegative(inputEl) {
+        if (!inputEl) return;
+
+        // '-'나 'e' 같은 음수/지수 입력 막기
+        inputEl.addEventListener("keydown", function(e) {
+          if (e.key === "-" || e.key === "e") {
+            e.preventDefault();
+          }
+        });
+
+        // 값이 바뀔 때 0 미만이면 강제로 0으로 보정
+        inputEl.addEventListener("input", function() {
+          var n = parseInt(inputEl.value || "0", 10);
+          if (isNaN(n) || n < 0) {
+            n = 0;
+          }
+          inputEl.value = n;
+        });
+      }
+
+      // 분/초 입력에 음수 방지 적용
+      blockNegative(timerMinInput);
+      blockNegative(timerSecInput);
+
+      // 현재 버튼 구조엔 아이콘/라벨이 없으니 방어적 처리
+      var startBtnIcon = timerStartBtn ? timerStartBtn.querySelector("i") : null;
+      var startBtnLabel = timerStartBtn ? timerStartBtn.querySelector("span") : null;
+
+      function setStartBtnState(isRunning) {
+        if (!startBtnIcon) return;
+        if (isRunning) {
+          startBtnIcon.classList.remove("fa-play");
+          startBtnIcon.classList.add("fa-pause");
+          if (startBtnLabel) startBtnLabel.textContent = "진행 중";
+        } else {
+          startBtnIcon.classList.remove("fa-pause");
+          startBtnIcon.classList.add("fa-play");
+          if (startBtnLabel) startBtnLabel.textContent = "시작";
+        }
+      }
+
+      var detoxSessionActive = false;
+
+      function formatTimer(ms) {
+        var totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        var m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        var s = String(totalSeconds % 60).padStart(2, "0");
+        return m + ":" + s;
+      }
+
+      function updateTimerDisplay() {
+        if (timerDisplay) {
+          timerDisplay.textContent = formatTimer(timerRemainingMs);
+        }
+      }
+
+      function readTimerFromInput() {
+        if (!timerMinInput || !timerSecInput) return 0;
+        var m = parseInt(timerMinInput.value || "0", 10);
+        var s = parseInt(timerSecInput.value || "0", 10);
+        var total = (m * 60 + s) * 1000;
+        if (isNaN(total) || total < 0) {
+          return 0;
+        }
+        return total;
+      }
+
+      function startTimer() {
+        if (timerRunning) return;
+
+        if (timerRemainingMs <= 0) {
+          timerRemainingMs = readTimerFromInput();
+          if (timerRemainingMs <= 0) {
+            alert("분/초를 입력한 뒤 시작을 눌러주세요.");
+            return;
+          }
+        }
+
+        timerRunning = true;
+        setStartBtnState(true);
+
+        var startTime = Date.now();
+        var startRemaining = timerRemainingMs;
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(function () {
+          var elapsed = Date.now() - startTime;
+          var nextRemaining = startRemaining - elapsed;
+
+          if (nextRemaining <= 0) {
+            timerRemainingMs = 0;
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            timerRunning = false;
+            onTimerFinished();
+          } else {
+            timerRemainingMs = nextRemaining;
+            updateTimerDisplay();
+          }
+        }, 200);
+
+        updateTimerDisplay();
+      }
+
+      function pauseTimer() {
+        if (!timerRunning) return;
+        timerRunning = false;
+        clearInterval(timerInterval);
+        setStartBtnState(false);
+      }
+
+      function resetTimer() {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        timerRemainingMs = 0;
+        updateTimerDisplay();
+        detoxSessionActive = false;
+        updateLockStatus("상태: 대기 중");
+        setStartBtnState(false);
+      }
+
+      if (timerStartBtn) {
+        timerStartBtn.addEventListener("click", function () {
+          detoxSessionActive = false;
+          updateLockStatus("상태: 대기 중");
+          startTimer();
+        });
+      }
+      if (timerPauseBtn) {
+        timerPauseBtn.addEventListener("click", pauseTimer);
+      }
+      if (timerResetBtn) {
+        timerResetBtn.addEventListener("click", resetTimer);
+      }
+
+      updateTimerDisplay();
+
+      var detoxLockBtn = document.getElementById("detoxLockBtn");
+      var lockStatus = document.getElementById("lockStatus");
+
+      function updateLockStatus(text) {
+        if (lockStatus) {
+          lockStatus.textContent = text;
+        }
+      }
+
+      // ✅ 타이머 끝났을 때: 알람 재생 → alert → 확인 누르면 알람 정지
+      function onTimerFinished() {
+        setStartBtnState(false);
+
+        // 지금 이 순간 디톡스 모드였는지 기록
+        var wasDetox = detoxSessionActive;
+
+        // 1) ⏰ 알람 소리 재생
+        if (alarmSoundEl) {
+          try {
+            alarmSoundEl.currentTime = 0;
+            var p = alarmSoundEl.play();
+            if (p && typeof p.then === "function") {
+              p.catch(function () {});
+            }
+          } catch (e) {}
+        }
+
+        // 2) 🗨️ alert 표시
+        if (wasDetox) {
+          alert(
+            "디지털 디톡스 세션이 종료되었습니다.\n천천히 눈을 뜨고, 몸을 가볍게 풀어주세요."
+          );
+        } else {
+          alert("타이머가 종료되었습니다!");
+        }
+
+        // 3) ✅ alert 확인 누른 뒤 알람 정지
+        if (alarmSoundEl) {
+          alarmSoundEl.pause();
+          alarmSoundEl.currentTime = 0;
+        }
+
+        // 4) 디톡스 상태 업데이트
+        if (wasDetox) {
+          detoxSessionActive = false;
+          updateLockStatus("상태: 완료 (디톡스 세션 종료)");
+        }
+      }
+
+      if (detoxLockBtn) {
+        detoxLockBtn.addEventListener("click", function () {
+          if (!timerRunning && timerRemainingMs <= 0) {
+            timerRemainingMs = readTimerFromInput();
+            if (timerRemainingMs <= 0) {
+              alert("디톡스 세션 전에 타이머 시간을 먼저 설정해 주세요.");
+              return;
+            }
+          }
+
+          detoxSessionActive = true;
+          updateLockStatus("상태: 진행 중 (디지털 디톡스 세션)");
+
+          if (!timerRunning) {
+            startTimer();
+          } else {
+            alert(
+              "이미 타이머가 실행 중입니다. 현재 타이머가 디톡스 세션으로 사용됩니다."
+            );
+          }
+        });
+      }
+
+      /* ======================
+         2. 배경 소리 로직
+         ====================== */
+
+      var bgSound = document.getElementById("bgSound");
+      var soundButtons = document.querySelectorAll(".sound-btn");
+
+      var soundFiles = {
+        none: "",
+        calm: "frostAniSound.mp3",
+        bright: "frostAniSound.mp3",
+      };
+
+      function setBackgroundSound(key) {
+        if (!bgSound) return;
+
+        for (var i = 0; i < soundButtons.length; i++) {
+          var btn = soundButtons[i];
+          btn.classList.toggle("active", btn.getAttribute("data-sound") === key);
+        }
+
+        var src = soundFiles[key] || "";
+
+        if (key === "none" || !src) {
+          bgSound.pause();
+          bgSound.removeAttribute("src");
+          bgSound.removeAttribute("data-current");
+          bgSound.load();
+          bgSound.volume = 0;
+          return;
+        }
+
+        if (key === "calm") {
+          bgSound.volume = 0.25;
+        } else if (key === "bright") {
+          bgSound.volume = 0.75;
+        }
+
+        if (bgSound.getAttribute("data-current") !== key) {
+          bgSound.setAttribute("data-current", key);
+          bgSound.src = src;
+          bgSound.currentTime = 0;
+        }
+
+        bgSound.play().catch(function () {});
+      }
+
+      for (var i2 = 0; i2 < soundButtons.length; i2++) {
+        (function (btn) {
+          btn.addEventListener("click", function () {
+            setBackgroundSound(btn.getAttribute("data-sound"));
+          });
+        })(soundButtons[i2]);
+      }
+
+      setBackgroundSound("none");
+
+      /* ======================
+         3. 성에 + 눈 효과 + 성에 닦는 소리
+         ====================== */
+
+      const windowArea = document.getElementById('window-area');
+      const wipeSoundEl = document.getElementById('wipeSound');
+
+      const PLAY_OFFSET = 4.0;
+      const PLAY_DURATION = 4.35;
+      let lastWipeSoundTime = 0;
+
+      function playWipeSoundOnce() {
+        if (!wipeSoundEl) return;
+
+        try {
+          wipeSoundEl.currentTime = PLAY_OFFSET;
+          const p = wipeSoundEl.play();
+          if (p && typeof p.then === 'function') {
+            p.catch(() => {});
+          }
+
+          setTimeout(() => {
+            if (!wipeSoundEl.paused) {
+              wipeSoundEl.pause();
+              wipeSoundEl.currentTime = 0;
+            }
+          }, PLAY_DURATION * 1000);
+        } catch (e) {}
+      }
+
+      function playWipeSoundIfNeeded(x, y, ctx) {
+        if (!wipeSoundEl) return;
+
+        const now = performance.now();
+        if (now - lastWipeSoundTime < 120) return;
+
+        const w = ctx.canvas.width;
+        const h = ctx.canvas.height;
+
+        const sampleSize = 8;
+        const sx = Math.max(0, Math.min(w - sampleSize, x - sampleSize / 2));
+        const sy = Math.max(0, Math.min(h - sampleSize, y - sampleSize / 2));
+
+        const img = ctx.getImageData(sx, sy, sampleSize, sampleSize);
+        const data = img.data;
+
+        let hasFrost = false;
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] > 10) {
+            hasFrost = true;
+            break;
+          }
+        }
+        if (!hasFrost) return;
+
+        lastWipeSoundTime = now;
+        playWipeSoundOnce();
+      }
+
+      function createSnowflake() {
+        const snowflake = document.createElement('div');
+        snowflake.classList.add('snowflake');
+
+        const size = Math.random() * 4 + 2;
+        snowflake.style.width = `${size}px`;
+        snowflake.style.height = `${size}px`;
+        snowflake.style.left = `${Math.random() * 100}%`;
+
+        const duration = Math.random() * 3 + 2;
+        snowflake.style.opacity = Math.random() * 0.5 + 0.3;
+        snowflake.style.animation = `fall ${duration}s linear forwards`;
+
+        windowArea.appendChild(snowflake);
+        setTimeout(() => snowflake.remove(), duration * 1000);
+      }
+      setInterval(createSnowflake, 120);
+
+      const frostCanvas = document.getElementById('frostCanvas');
+      const fctx = frostCanvas.getContext('2d');
+      const FREEZE_SPEED = 0.015;
+      let isDrawing = false;
+
+      function resizeFrost() {
+        frostCanvas.width  = windowArea.clientWidth;
+        frostCanvas.height = windowArea.clientHeight;
+        drawFullFrost();
+      }
+
+      function drawFullFrost() {
+        fctx.globalCompositeOperation = 'source-over';
+        fctx.fillStyle = 'rgba(240, 248, 255, 0.9)';
+        fctx.fillRect(0, 0, frostCanvas.width, frostCanvas.height);
+        addFrostNoise();
+      }
+
+      function addFrostNoise() {
+        const w = frostCanvas.width;
+        const h = frostCanvas.height;
+        const idata = fctx.getImageData(0, 0, w, h);
+        const buffer32 = new Uint32Array(idata.data.buffer);
+        for (let i = 0; i < buffer32.length; i++) {
+          if (Math.random() < 0.1) buffer32[i] = 0xffffffff;
+        }
+        fctx.putImageData(idata, 0, 0);
+      }
+
+      function animateFrost() {
+        fctx.globalCompositeOperation = 'source-over';
+        fctx.fillStyle = `rgba(255, 255, 255, ${FREEZE_SPEED})`;
+        fctx.fillRect(0, 0, frostCanvas.width, frostCanvas.height);
+        requestAnimationFrame(animateFrost);
+      }
+
+      function scratch(x, y) {
+        playWipeSoundIfNeeded(x, y, fctx);
+
+        fctx.globalCompositeOperation = 'destination-out';
+        fctx.beginPath();
+        const radius = 50;
+        const g = fctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
+        g.addColorStop(0, 'rgba(0,0,0,1)');
+        g.addColorStop(0.6, 'rgba(0,0,0,0.4)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        fctx.fillStyle = g;
+        fctx.arc(x, y, radius, 0, Math.PI * 2, false);
+        fctx.fill();
+      }
+
+      function getPosFromEvent(evt) {
+        const rect = frostCanvas.getBoundingClientRect();
+        if (evt.touches && evt.touches[0]) {
+          return {
+            x: evt.touches[0].clientX - rect.left,
+            y: evt.touches[0].clientY - rect.top
+          };
+        } else {
+          return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          };
+        }
+      }
+
+      frostCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        frostCanvas.classList.add('active');
+        const pos = getPosFromEvent(e);
+        scratch(pos.x, pos.y);
+      }, { passive: true });
+
+      frostCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const pos = getPosFromEvent(e);
+        scratch(pos.x, pos.y);
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDrawing = false;
+        frostCanvas.classList.remove('active');
+      });
+
+      frostCanvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        frostCanvas.classList.add('active');
+        const pos = getPosFromEvent(e);
+        scratch(pos.x, pos.y);
+      }, { passive: true });
+
+      frostCanvas.addEventListener('touchmove', (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPosFromEvent(e);
+        scratch(pos.x, pos.y);
+      }, { passive: false });
+
+      frostCanvas.addEventListener('touchend', () => {
+        isDrawing = false;
+        frostCanvas.classList.remove('active');
+      });
+
+      window.addEventListener('resize', resizeFrost);
+      resizeFrost();
+      animateFrost();
+
+      /* ======================
+         4. 뒤로가기 버튼
+         ====================== */
+      const backBtn = document.getElementById('backToSelect');
+      if (backBtn){
+        backBtn.addEventListener('click', () => {
+          alert("이전 페이지로 돌아갑니다.");
+          window.location.href = "main.html";
+        });
+      }
+    });
+  </script>
+</body>
+</html>

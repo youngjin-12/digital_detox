@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가을 산책로 - 왼쪽 나무</title>
+    <style>
+        :root {
+          --border: rgba(255, 255, 255, 0.2);
+          --fg: #2c1810;
+          --accent: #f97316;
+          --accent-soft: rgba(248, 171, 101, 0.35);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #FAD6B6 0%, #FFE9D6 60%, #FFF4E6 100%);
+            user-select: none;
+            font-family: sans-serif;
+            position: relative;
+        }
+
+        /* 오른쪽 패널 레이아웃 (수정됨: 숨김 기능 추가) */
+        .main-layout {
+            position: absolute;
+            right: -320px; /* 화면 밖으로 숨김 */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 200; /* 다른 요소보다 위에 오도록 높임 */
+            transition: right 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* 부드러운 슬라이딩 */
+            padding-left: 20px; /* 마우스 감지 영역 */
+        }
+
+        /* 마우스가 가까이 오면 나타나는 클래스 */
+        .main-layout.active {
+            right: 40px;
+        }
+
+        .control-card {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 12px 14px 14px;
+            background: rgba(186, 155, 124, 0.7);
+            backdrop-filter: blur(10px);
+            color: var(--fg);
+        }
+
+        .control-card h2 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            opacity: 0.75;
+            margin-bottom: 6px;
+        }
+
+        .control-btn, .back-btn {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(126, 90, 68, 0.6);
+            color: var(--fg);
+            font-size: 0.80rem;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .control-btn:hover,
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.26);
+        }
+
+        .control-btn:active,
+        .start-btn:active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .sound-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sound-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .timer-inputs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .timer-inputs input {
+            width: 52px;
+            padding: 4px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(86, 56, 39, 0.26);
+            color: var(--fg);
+            text-align: center;
+        }
+
+        .time-display {
+            font-family: ui-monospace;
+            font-size: 1.6rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .lock-status {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .controls .control-btn {
+            width: 100%;
+        }
+
+        /* === 배경 구름 === */
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            opacity: 0.9;
+            z-index: 1;
+        }
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+        }
+        .c1 { top: 10%; right: 10%; width: 100px; height: 40px; }
+        .c1::after { top: -20px; left: 15px; width: 50px; height: 50px; }
+        .c2 { top: 15%; left: 25%; width: 80px; height: 30px; }
+        .c2::after { top: -15px; left: 10px; width: 40px; height: 40px; }
+
+        /* === 원경 숲 === */
+        .distant-forest {
+            position: absolute;
+            bottom: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 150px;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .bush {
+            border-radius: 50px 50px 0 0;
+            position: relative;
+            margin-left: -15px;
+        }
+        .b1 { width: 60px; height: 80px; background: #D84315; z-index: 2; }
+        .b2 { width: 80px; height: 110px; background: #FFB74D; z-index: 1; }
+        .b3 { width: 50px; height: 70px; background: #FF7043; z-index: 2; }
+        .b4 { width: 70px; height: 90px; background: #E65100; z-index: 1; }
+
+        /* === 들판 및 길 === */
+        .field {
+            position: absolute;
+            bottom: 25%;
+            width: 100%;
+            height: 25%;
+            background: #FFAB73;
+            z-index: 3;
+        }
+
+        .pathway {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 25%;
+            background: #EAECE5;
+            border-top: 4px solid #D6D8D1;
+            z-index: 4;
+            display: flex;
+        }
+        .path-line {
+            width: 1px;
+            height: 100%;
+            background: #D6D8D1;
+            transform: skewX(40deg);
+            margin-left: 15vw;
+            opacity: 0.6;
+        }
+
+        /* === 벤치 === */
+        .bench-container {
+            position: absolute;
+            bottom: 20%;
+            left: 70%;
+            transform: translateX(-50%);
+            width: 220px;
+            height: 100px;
+            z-index: 5;
+        }
+        .bench-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 25px;
+            background: #5D4037;
+            border-radius: 4px;
+        }
+        .bench-seat {
+            position: absolute;
+            top: 40px;
+            left: -10px;
+            width: 240px;
+            height: 15px;
+            background: #8D6E63;
+            border-radius: 3px;
+        }
+        .bench-leg {
+            position: absolute;
+            top: 45px;
+            width: 8px;
+            height: 60px;
+            background: #3E2723;
+            transform: skewX(-15deg);
+        }
+        .leg-left { left: 20px; }
+        .leg-right { right: 20px; }
+        .bench-leg-back {
+            position: absolute;
+            top: 25px;
+            width: 8px;
+            height: 80px;
+            background: #3E2723;
+            transform: skewX(-15deg);
+            z-index: -1;
+        }
+        .leg-back-left { left: 35px; }
+        .leg-back-right { right: 35px; }
+
+        /* === 큰 나무 (왼쪽) === */
+        .big-tree-container {
+            position: absolute;
+            bottom: -40px;
+            left: -30px;
+            width: 45vw;
+            height: 95vh;
+            z-index: 6;
+            pointer-events: none;
+            transform: scaleX(-1);
+        }
+        .tree-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        .tree-trunk { fill: #5D4037; }
+        .tree-shadow { fill: #3E2723; opacity: 0.55; }
+        .tree-branch { fill: #6D4C41; }
+
+        /* === 잎 덩어리 === */
+        .tree-foliage {
+            position: absolute;
+            top: -8%;
+            left: -5%;
+            width: 620px;
+            height: 420px;
+            z-index: 7;
+            transform: scaleX(-1);
+        }
+        .leaf-blob {
+            position: absolute;
+            border-radius: 50% 60% 55% 70%;
+            opacity: 1;
+            box-shadow: 0 12px 18px rgba(0, 0, 0, 0.15);
+        }
+        .lb1 { top: -10px; right: 0; width: 420px; height: 310px; background: #D65A31; }
+        .lb2 { top: 150px; right: 110px; width: 260px; height: 210px; background: #E69A8D; }
+        .lb3 { top: 60px; right: 260px; width: 220px; height: 160px; background: #F2A365; }
+        .lb4 { bottom: -10px; right: 80px; width: 260px; height: 150px; background: #C13C1E; opacity: 0.95; }
+        .lb5 { bottom: 20px; right: 260px; width: 200px; height: 130px; background: #ECB390; opacity: 0.9; }
+
+        /* === 낙엽 === */
+        .leaf {
+            position: absolute;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.1s linear;
+        }
+        .leaf:hover {
+            filter: brightness(1.2);
+            z-index: 20;
+        }
+        .shard {
+            position: absolute;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        /* === 오른쪽 덤불 === */
+        .corner-bush {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            z-index: 8;
+            transform: scaleX(-1);
+        }
+        .cb-blob {
+            position: absolute;
+            background: #FF5722;
+            border-radius: 50%;
+        }
+        .cb1 { width: 150px; height: 120px; bottom: 0; left: 0; background: #BF360C; }
+        .cb2 { width: 100px; height: 80px; bottom: 10px; left: 80px; background: #D84315; }
+
+        .info {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #5D4037;
+            opacity: 0.8;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 100;
+            text-align: center;
+            animation: infoFadeOut 1.5s ease-out forwards;
+            animation-delay: 4s;
+        }
+        @keyframes infoFadeOut {
+            to { opacity: 0; transform: translate(-50%, -60%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+
+    <div class="distant-forest">
+        <div class="bush b1"></div>
+        <div class="bush b2"></div>
+        <div class="bush b4"></div>
+        <div class="bush b3"></div>
+    </div>
+
+    <div class="field"></div>
+
+    <div class="pathway">
+        <div class="path-line"></div>
+        <div class="path-line"></div>
+        <div class="path-line"></div>
+        <div class="path-line"></div>
+    </div>
+
+    <div class="bench-container">
+        <div class="bench-leg-back leg-back-left"></div>
+        <div class="bench-leg-back leg-back-right"></div>
+        <div class="bench-back"></div>
+        <div class="bench-leg leg-left"></div>
+        <div class="bench-leg leg-right"></div>
+        <div class="bench-seat"></div>
+    </div>
+
+    <div class="big-tree-container">
+        <svg class="tree-svg" viewBox="0 0 200 400" preserveAspectRatio="xMaxYMax slice">
+            <defs>
+                <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#4E342E" />
+                    <stop offset="40%" stop-color="#6D4C41" />
+                    <stop offset="100%" stop-color="#3E2723" />
+                </linearGradient>
+            </defs>
+
+            <path class="tree-trunk" fill="url(#trunkGrad)"
+                  d="M185 400 L150 400 Q142 310 145 235 Q149 160 150 90 Q152 55 165 30 L190 30 Q178 70 176 110 Q172 190 175 260 Q178 330 185 400 Z" />
+
+            <path class="tree-shadow"
+                  d="M185 400 Q178 320 176 250 Q174 190 176 130 Q178 90 186 55 L190 54 Q183 90 182 120 Q180 190 182 255 Q183 320 190 400 Z" />
+
+            <path class="tree-branch"
+                  d="M160 190 Q130 175 100 150 Q80 135 65 120 L55 105 L65 100 Q80 115 95 125 Q120 145 145 155 Z" />
+
+            <path class="tree-branch"
+                  d="M162 245 Q135 250 110 265 Q95 275 80 290 L72 300 L82 305 Q98 292 115 283 Q135 273 158 268 Z" />
+
+            <path class="tree-branch"
+                  d="M178 150 Q185 145 192 138 L198 143 Q191 152 184 158 Q180 161 176 162 L172 158 Q175 156 178 150 Z" />
+        </svg>
+    </div>
+
+    <div class="tree-foliage">
+        <div class="leaf-blob lb1"></div>
+        <div class="leaf-blob lb2"></div>
+        <div class="leaf-blob lb3"></div>
+        <div class="leaf-blob lb4"></div>
+        <div class="leaf-blob lb5"></div>
+    </div>
+
+    <div class="corner-bush">
+        <div class="cb-blob cb1"></div>
+        <div class="cb-blob cb2"></div>
+    </div>
+
+    <div class="info">
+        <p>왼쪽의 큰 나무 아래에서</p>
+        <p>떨어지는 가을 낙엽을 모아보세요.</p>
+    </div>
+
+    <script>
+    window.addEventListener('DOMContentLoaded', function() {
+        
+        /* ======================
+           0. 사이드바 자동 숨김/표시 로직 (추가됨)
+           ====================================== */
+        const sidebar = document.querySelector('.main-layout');
+        
+        document.addEventListener('mousemove', (e) => {
+            const screenWidth = window.innerWidth;
+            const mouseX = e.clientX;
+            
+            // 화면 오른쪽 끝 100px 이내 or 사이드바 내부
+            const isNearRightEdge = (screenWidth - mouseX) < 100;
+            const isInsideSidebar = sidebar.contains(e.target) || 
+                                    (mouseX > (screenWidth - 320));
+
+            if (isNearRightEdge || isInsideSidebar) {
+                sidebar.classList.add('active');
+            } else {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        /* ======================
+           1. 타이머 + 디톡스
+           ====================== */
+
+        var timerMinInput = document.getElementById("timerMin");
+        var timerSecInput = document.getElementById("timerSec");
+        var timerDisplay = document.getElementById("timerDisplay");
+
+        var timerStartBtn = document.getElementById("timerStartBtn");
+        var timerPauseBtn = document.getElementById("timerPauseBtn");
+        var timerResetBtn = document.getElementById("timerResetBtn");
+
+        var timerInterval = null;
+        var timerRemainingMs = 0;
+        var timerRunning = false;
+
+        // 🔒 음수 입력 방지 함수
+        function blockNegative(inputEl) {
+          if (!inputEl) return;
+
+          // '-'나 'e' 입력 막기
+          inputEl.addEventListener("keydown", function(e) {
+            if (e.key === "-" || e.key === "e") {
+              e.preventDefault();
+            }
+          });
+
+          // 값이 0 미만 / NaN이면 0으로 보정
+          inputEl.addEventListener("input", function() {
+            var n = parseInt(inputEl.value || "0", 10);
+            if (isNaN(n) || n < 0) {
+              n = 0;
+            }
+            inputEl.value = n;
+          });
+        }
+
+        // 분/초 입력에 음수 방지 적용
+        blockNegative(timerMinInput);
+        blockNegative(timerSecInput);
+
+        // 아이콘/라벨은 현재 버튼 안에 없으니, 방어 코드만 둠
+        var startBtnIcon = timerStartBtn ? timerStartBtn.querySelector("i") : null;
+        var startBtnLabel = timerStartBtn ? timerStartBtn.querySelector("span") : null;
+
+        function setStartBtnState(isRunning) {
+          if (!startBtnIcon) return;
+          if (isRunning) {
+            startBtnIcon.classList.remove("fa-play");
+            startBtnIcon.classList.add("fa-pause");
+            if (startBtnLabel) startBtnLabel.textContent = "진행 중";
+          } else {
+            startBtnIcon.classList.remove("fa-pause");
+            startBtnIcon.classList.add("fa-play");
+            if (startBtnLabel) startBtnLabel.textContent = "시작";
+          }
+        }
+
+        var detoxSessionActive = false;
+
+        function formatTimer(ms) {
+          var totalSeconds = Math.max(0, Math.floor(ms / 1000));
+          var m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+          var s = String(totalSeconds % 60).padStart(2, "0");
+          return m + ":" + s;
+        }
+
+        function updateTimerDisplay() {
+          if (timerDisplay) {
+            timerDisplay.textContent = formatTimer(timerRemainingMs);
+          }
+        }
+
+        function readTimerFromInput() {
+          if (!timerMinInput || !timerSecInput) return 0;
+          var m = parseInt(timerMinInput.value || "0", 10);
+          var s = parseInt(timerSecInput.value || "0", 10);
+          var total = (m * 60 + s) * 1000;
+          if (isNaN(total) || total < 0) {
+            return 0;
+          }
+          return total;
+        }
+
+        function startTimer() {
+          if (timerRunning) return;
+
+          if (timerRemainingMs <= 0) {
+            timerRemainingMs = readTimerFromInput();
+            if (timerRemainingMs <= 0) {
+              alert("분/초를 입력한 뒤 시작을 눌러주세요.");
+              return;
+            }
+          }
+
+          timerRunning = true;
+          setStartBtnState(true);
+
+          var startTime = Date.now();
+          var startRemaining = timerRemainingMs;
+
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(function () {
+            var elapsed = Date.now() - startTime;
+            var nextRemaining = startRemaining - elapsed;
+
+            if (nextRemaining <= 0) {
+              timerRemainingMs = 0;
+              updateTimerDisplay();
+              clearInterval(timerInterval);
+              timerRunning = false;
+              onTimerFinished();
+            } else {
+              timerRemainingMs = nextRemaining;
+              updateTimerDisplay();
+            }
+          }, 200);
+
+          updateTimerDisplay();
+        }
+
+        function pauseTimer() {
+          if (!timerRunning) return;
+          timerRunning = false;
+          clearInterval(timerInterval);
+          setStartBtnState(false);
+        }
+
+        function resetTimer() {
+          timerRunning = false;
+          clearInterval(timerInterval);
+          timerRemainingMs = 0;
+          updateTimerDisplay();
+          detoxSessionActive = false;
+          updateLockStatus("상태: 대기 중");
+          setStartBtnState(false);
+        }
+
+        if (timerStartBtn) {
+          timerStartBtn.addEventListener("click", function () {
+            detoxSessionActive = false;
+            updateLockStatus("상태: 대기 중");
+            startTimer();
+          });
+        }
+        if (timerPauseBtn) {
+          timerPauseBtn.addEventListener("click", pauseTimer);
+        }
+        if (timerResetBtn) {
+          timerResetBtn.addEventListener("click", resetTimer);
+        }
+
+        updateTimerDisplay();
+
+        var detoxLockBtn = document.getElementById("detoxLockBtn");
+        var lockStatus = document.getElementById("lockStatus");
+
+        function updateLockStatus(text) {
+          if (lockStatus) {
+            lockStatus.textContent = text;
+          }
+        }
+
+        // ⏰ 타이머 알람 사운드 요소
+        var alarmSoundEl = document.getElementById("alarmSound");
+
+        // 타이머 종료 시: 알람 재생 + alert 후 알람 정지
+        function onTimerFinished() {
+          setStartBtnState(false);
+
+          // 1) 알람 소리 재생
+          if (alarmSoundEl) {
+            try {
+              alarmSoundEl.currentTime = 0;
+              var p = alarmSoundEl.play();
+              if (p && typeof p.then === "function") {
+                p.catch(function(){});
+              }
+            } catch (e) {}
+          }
+
+          // 2) alert 표시
+          if (detoxSessionActive) {
+            detoxSessionActive = false;
+            updateLockStatus("상태: 완료 (디톡스 세션 종료)");
+            alert(
+              "디지털 디톡스 세션이 종료되었습니다.\n천천히 눈을 뜨고, 몸을 가볍게 풀어주세요."
+            );
+          } else {
+            alert("타이머가 종료되었습니다!");
+          }
+
+          // 3) alert 확인 후 알람 정지
+          if (alarmSoundEl) {
+            alarmSoundEl.pause();
+            alarmSoundEl.currentTime = 0;
+          }
+        }
+
+        if (detoxLockBtn) {
+          detoxLockBtn.addEventListener("click", function () {
+            if (!timerRunning && timerRemainingMs <= 0) {
+              timerRemainingMs = readTimerFromInput();
+              if (timerRemainingMs <= 0) {
+                alert("디톡스 세션 전에 타이머 시간을 먼저 설정해 주세요.");
+                return;
+              }
+            }
+
+            detoxSessionActive = true;
+            updateLockStatus("상태: 진행 중 (디지털 디톡스 세션)");
+
+            if (!timerRunning) {
+              startTimer();
+            } else {
+              alert(
+                "이미 타이머가 실행 중입니다. 현재 타이머가 디톡스 세션으로 사용됩니다."
+              );
+            }
+          });
+        }
+
+        /* ======================
+           2. 배경 소리 로직
+           ====================== */
+
+        var bgSound = document.getElementById("bgSound");
+        var soundButtons = document.querySelectorAll(".sound-btn");
+
+        var soundFiles = {
+          none: "",
+          calm: "windsound.mp3",
+          bright: "windsound.mp3",
+        };
+
+        function setBackgroundSound(key) {
+          if (!bgSound) return;
+
+          // 버튼 active 토글
+          for (var i = 0; i < soundButtons.length; i++) {
+            var btn = soundButtons[i];
+            btn.classList.toggle("active", btn.getAttribute("data-sound") === key);
+          }
+
+          var src = soundFiles[key] || "";
+
+          // 🔇 끄기 모드
+          if (key === "none" || !src) {
+            bgSound.pause();
+            bgSound.removeAttribute("src");
+            bgSound.removeAttribute("data-current");
+            bgSound.load();
+            bgSound.volume = 0;
+            return;
+          }
+
+          // 🔊 잔잔 / 경쾌 볼륨 설정
+          if (key === "calm") {
+            bgSound.volume = 0.25;  // 작게
+          } else if (key === "bright") {
+            bgSound.volume = 0.75;  // 크게
+          }
+
+          // 같은 모드로 다시 눌렀을 때 src 재설정 방지
+          if (bgSound.getAttribute("data-current") !== key) {
+            bgSound.setAttribute("data-current", key);
+            bgSound.src = src;
+            bgSound.currentTime = 0;
+          }
+
+          bgSound.play().catch(function () {});
+        }
+
+        for (var i2 = 0; i2 < soundButtons.length; i2++) {
+          (function (btn) {
+            btn.addEventListener("click", function () {
+              setBackgroundSound(btn.getAttribute("data-sound"));
+            });
+          })(soundButtons[i2]);
+        }
+
+        // 처음에는 끄기 상태(무음)
+        setBackgroundSound("none");
+
+        /* ======================
+           3. 낙엽 애니메이션 + 낙엽 사운드
+           ====================== */
+
+        // 🔊 낙엽 사운드 요소 & 레이트리밋
+        const leafSoundEl = document.getElementById('leafSound');
+        let leafSoundTimeout = null;
+        const LEAF_SOUND_OFFSET = 0.1;   // 몇 초 지점부터 재생할지
+        const LEAF_SOUND_DURATION = 0.8; // 몇 초 동안만 들릴지
+
+        function playLeafSoundSegment() {
+            if (!leafSoundEl) return;
+
+            if (leafSoundTimeout) {
+                clearTimeout(leafSoundTimeout);
+                leafSoundTimeout = null;
+            }
+
+            try {
+                leafSoundEl.currentTime = LEAF_SOUND_OFFSET;
+                const p = leafSoundEl.play();
+                if (p && typeof p.then === 'function') {
+                    p.catch(() => {});
+                }
+
+                leafSoundTimeout = setTimeout(() => {
+                    if (!leafSoundEl.paused) {
+                        leafSoundEl.pause();
+                    }
+                    leafSoundEl.currentTime = 0;
+                    leafSoundTimeout = null;
+                }, LEAF_SOUND_DURATION * 1000);
+            } catch (e) {
+                // 브라우저 정책 에러 등은 무시
+            }
+        }
+
+        const colors = [
+            '#F4D03F',
+            '#C0392B',
+            '#E67E22',
+            '#6E2C00',
+            '#D35400',
+            '#7D6608',
+            '#A04000',
+            '#922B21'
+        ];
+
+        const shapes = [
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 22 
+                         L12 18 
+                         Q5 16 3 10 
+                         Q2 5 7 3 
+                         Q12 2 17 3 
+                         Q22 5 21 10 
+                         Q19 16 12 18 Z
+                         M12 22 L12 16"/>
+            </svg>`,
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 3 
+                         L14 7 L19 6 
+                         L16.5 10 L19 13 
+                         L15 14 L16 19 
+                         L13 17.5 L12 22 
+                         L11 17.5 L8 19 
+                         L9 14 L5 13 
+                         L7.5 10 L5 6 
+                         L10 7 Z"/>
+            </svg>`,
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 2 
+                         Q10 4 9 6 
+                         Q7 7 7 9 
+                         Q7 11 9 12 
+                         Q7 14 8 16 
+                         L10 17 L11 21 L13 21 L14 17 
+                         L16 16 
+                         Q17 14 15 12 
+                         Q17 11 17 9 
+                         Q17 7 15 6 
+                         Q14 4 12 2 Z"/>
+            </svg>`,
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 21 
+                         Q12 17 16 12 
+                         Q19 7 12 2 
+                         Q5 7 8 12 
+                         Q12 17 12 21 Z
+                         M12 21 L12 12"/>
+            </svg>`,
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 21 
+                         L12 17 
+                         Q16 15 18 10 
+                         L20 5 L15 7 
+                         L12 4 
+                         L9 7 L4 5 
+                         L6 10 
+                         Q8 15 12 17 Z"/>
+            </svg>`,
+            `<svg viewBox="0 0 24 24" fill="CURRENT_COLOR">
+                <path d="M12 2
+                         Q14 5 14 8 
+                         L15 10 L14 12 L15 14 
+                         Q14 18 12 22
+                         Q10 18 9 14 
+                         L10 12 L9 10 L10 8
+                         Q10 5 12 2 Z"/>
+            </svg>`
+        ];
+
+        const activeLeaves = [];
+        const MAX_LEAVES = 100;
+
+        class Leaf {
+            constructor() {
+                this.element = document.createElement('div');
+                this.element.classList.add('leaf');
+                
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                const shapeStr = shapes[Math.floor(Math.random() * shapes.length)]
+                    .replace('CURRENT_COLOR', this.color);
+                
+                this.size = 20 + Math.random() * 22;
+                
+                this.element.innerHTML = shapeStr;
+                this.element.style.width = `${this.size}px`;
+                this.element.style.height = `${this.size}px`;
+                this.element.style.color = this.color;
+
+                this.x = Math.random() * 60 - 10; 
+                this.y = -10; 
+                
+                this.speed = 0.3 + Math.random() * 0.4;
+                this.swaySpeed = 0.02 + Math.random() * 0.03;
+                this.swayRange = 0.5 + Math.random() * 1.0; 
+                this.angle = 0;
+                this.rotation = Math.random() * 360;
+                this.rotSpeed = (Math.random() - 0.5) * 2;
+
+                this.windX = 0.1 + Math.random() * 0.15;
+
+                this.landingY = 85 + Math.random() * 10;
+                this.isLanded = false;
+
+                this.element.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.destroy(e.clientX, e.clientY);
+                });
+
+                document.body.appendChild(this.element);
+            }
+
+            update() {
+                if (this.isLanded) return;
+
+                this.y += this.speed;
+                this.x += this.windX;
+                this.angle += this.swaySpeed;
+                const swayOffset = Math.sin(this.angle) * this.swayRange;
+                this.rotation += this.rotSpeed;
+
+                this.element.style.left = `calc(${this.x}vw + ${swayOffset}vw)`;
+                this.element.style.top = `${this.y}vh`;
+                this.element.style.transform = `rotate(${this.rotation}deg)`;
+
+                if (this.y >= this.landingY) {
+                    this.land();
+                }
+            }
+
+            land() {
+                this.isLanded = true;
+                this.y = this.landingY;
+                this.element.style.top = `${this.landingY}vh`;
+                this.element.style.filter = "drop-shadow(1px 2px 2px rgba(0,0,0,0.2))";
+                this.element.style.zIndex = 15; 
+            }
+
+            destroy(x, y) {
+                // 🔊 낙엽 클릭할 때마다 짧게 소리 재생
+                playLeafSoundSegment();
+
+                const index = activeLeaves.indexOf(this);
+                if (index > -1) activeLeaves.splice(index, 1);
+                
+                this.element.remove();
+                createShards(x, y, this.color);
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        function createShards(x, y, color) {
+            const shardCount = 6 + Math.random() * 4;
+            for(let i=0; i<shardCount; i++) {
+                const shard = document.createElement('div');
+                shard.classList.add('shard');
+                shard.style.backgroundColor = color;
+                
+                const sSize = 4 + Math.random() * 4;
+                shard.style.width = `${sSize}px`;
+                shard.style.height = `${sSize}px`;
+                shard.style.left = `${x}px`;
+                shard.style.top = `${y}px`;
+                
+                shard.style.clipPath = `polygon(${Math.random()*50}% 0%, 100% ${Math.random()*50}%, ${50+Math.random()*50}% 100%, 0% ${50+Math.random()*50}%)`;
+
+                document.body.appendChild(shard);
+
+                const destX = (Math.random() - 0.5) * 100;
+                const destY = (Math.random() - 0.5) * 100;
+                const rot = Math.random() * 360;
+
+                const anim = shard.animate([
+                    { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate(${destX}px, ${destY}px) rotate(${rot}deg)`, opacity: 0 }
+                ], {
+                    duration: 400 + Math.random() * 300,
+                    easing: 'cubic-bezier(0, .9, .57, 1)',
+                    fill: 'forwards'
+                });
+
+                anim.onfinish = () => shard.remove();
+            }
+        }
+
+        function animate() {
+            activeLeaves.forEach(leaf => leaf.update());
+            requestAnimationFrame(animate);
+        }
+
+        function spawner() {
+            if (activeLeaves.length > MAX_LEAVES) {
+                const oldLeaf = activeLeaves.shift();
+                oldLeaf.remove();
+            }
+            activeLeaves.push(new Leaf());
+            setTimeout(spawner, 300 + Math.random() * 400); 
+        }
+
+        animate();
+        spawner();
+
+        /* ======================
+           4. 뒤로가기 버튼
+           ====================== */
+        const backBtn = document.getElementById('backToSelect');
+        if(backBtn){
+            backBtn.addEventListener('click', () => {
+              alert("이전 페이지로 돌아갑니다.");
+              window.location.href = "main.html";
+            });
+        }
+    });
+    </script>
+
+    <div class="main-layout">
+      <section class="control-card">
+        <h2>⏰ 타이머</h2>
+        <div class="label">디톡스 시간 설정</div>
+        <div class="timer-inputs">
+          <input id="timerMin" type="number" placeholder="분" />
+          :
+          <input id="timerSec" type="number" placeholder="초" />
+        </div>
+        <div id="timerDisplay" class="time-display">00:00</div>
+        <div class="controls">
+          <button id="timerStartBtn" class="control-btn start-btn">시작</button>
+          <button id="timerPauseBtn" class="control-btn">일시정지</button>
+          <button id="timerResetBtn" class="control-btn">초기화</button>
+        </div>
+      </section>
+
+      <section class="control-card">
+        <h2>🔒 디톡스 잠금</h2>
+        <p class="label">디톡스 세션 동안 방해 금지</p>
+        <button id="detoxLockBtn" class="control-btn">잠금 시작</button>
+        <div id="lockStatus" class="lock-status">상태: 대기 중</div>
+      </section>
+
+      <section class="control-card">
+        <h2>🎵 배경 소리</h2>
+        <div class="sound-buttons">
+          <button class="control-btn sound-btn" data-sound="none">끄기</button>
+          <button class="control-btn sound-btn" data-sound="calm">잔잔하게</button>
+          <button class="control-btn sound-btn" data-sound="bright">경쾌하게</button>
+        </div>
+      </section>
+
+      <button id="backToSelect" class="back-btn">← 이전 페이지</button>
+    </div>
+
+    <audio id="leafSound" src="LeafFallAniSound.mp3" preload="auto"></audio>
+    <audio id="alarmSound" src="AlramSound.mp3" preload="auto"></audio>
+    <audio id="bgSound" loop preload="auto"></audio>
+</body>
+</html>

@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>디지털 디톡스 데모</title>
+    <style>
+      :root {
+  --bg: #181a1f; /* 전체 배경: 진한 회색 */
+  --fg: #f6f7fa;
+  --accent: #ffb347;
+  --accent-soft: rgba(255, 179, 71, 0.18);
+
+  /* 테마 카드 색 팔레트 */
+  --card-bg: #aab2bd; /* 기본 테마 상자 색 */
+  --card-bg-soft: #ccd1d9; /* hover 시 */
+  --card-bg-muted: #8f97a3; /* active 시(살짝 더 진하게) */
+
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  /* 네이비 느낌 빼고, 회색 계열 그라디언트 */
+  background: radial-gradient(circle at top, #30333a 0, var(--bg) 55%);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1580px;
+  margin: 18px auto 26px;
+  padding: 0 16px;
+}
+
+/* 상단 바 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.digital-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.4);
+  font-family: ui-monospace;
+  font-size: 0.9rem;
+}
+
+.title-block h1 {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.title-block p {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+/* 메인 레이아웃 */
+.main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) 260px; /* ← 왼쪽 더 넓게, 오른쪽 약간 좁게 */
+  gap: 18px;
+  margin-bottom: 0;
+  padding-bottom: 40px;
+}
+
+.panel {
+  margin-bottom: 0;
+  padding-bottom: 20px;
+}
+
+/* 중앙 장면 영역 */
+.scene-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.scene-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.78;
+  margin-bottom: 8px;
+}
+
+.scene-canvas {
+  width: 100%;
+  height: calc(100vh - 240px);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: background 0.8s ease;
+}
+
+/* 오른쪽 컨트롤 */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 10px 10px 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.control-card h2 {
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.timer-inputs input {
+  width: 52px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--fg);
+  text-align: center;
+}
+
+.time-display {
+  font-family: ui-monospace;
+  font-size: 1.6rem;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.control-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 타이머 시작 버튼은 노란색(프라이머리) 빼고 일반 버튼 스타일로 */
+#timerStartBtn {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 호버 효과도 다른 버튼이랑 비슷하게 */
+#timerStartBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.sound-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sound-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.lock-status {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* 마우스를 올리면 자동으로 튀어나옴 */
+.floating-sidebar-left:hover {
+  transform: translateX(0);
+}
+
+.sidebar-grip {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #c5c5c5;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.side-theme-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.side-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.side-theme-btn.active {
+  background: rgba(255, 179, 71, 0.22);
+  box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.85);
+}
+
+/* ===== 디톡스 세션 모달 ===== */
+
+.detox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* 보여줄 때 붙일 클래스 */
+.detox-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detox-dialog {
+  width: min(420px, 90vw);
+  padding: 24px 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle at top, #262633 0, #090910 70%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  color: #fdfdfd;
+}
+
+.detox-title {
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+
+.detox-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 2.6rem;
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+}
+
+.detox-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin-bottom: 18px;
+}
+
+.detox-end-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.title-block {
+  display: flex;
+  align-items: center;
+}
+
+/* 로고 + 텍스트를 감싸는 알약 모양 배지 */
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* 워너원 로고 스타일 */
+.logo-img {
+  height: 26px; /* 너무 크면 22px로 줄여봐도 됨 */
+  width: auto;
+  display: block;
+  border-radius: 6px; /* 살짝 둥글리기 */
+  object-fit: contain;
+}
+
+/* 텍스트 쪽 */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.brand-sub {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+/* ===== 아래 테마 스트립 ===== */
+.theme-strip {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-window {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.theme-chip {
+  min-width: 110px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border 0.15s ease, transform 0.08s ease;
+}
+
+.theme-chip .emoji {
+  font-size: 1.1rem;
+}
+
+.theme-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px rgba(255, 179, 71, 0.6);
+  transform: translateY(-1px);
+}
+
+.theme-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 좌우 네비 버튼 */
+.theme-nav-btn {
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+/* ===== 공통 페이지 토글 ===== */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* ===== 페이지 1 : 테마 선택 ===== */
+.page-select {
+  margin-top: 24px;
+}
+/* --- 첫 페이지 로고 영역 --- */
+
+.select-hero {
+  margin: 36px auto 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* 중앙 로고 카드 */
+/* --- 첫 페이지 로고 영역 심플하게 리디자인 --- */
+
+/* 로고 위치는 그대로 중앙에 */
+.select-hero {
+  margin: 40px auto 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ✅ 네모 카드 제거: 배경·보더·박스쉐도우 전부 없애기 */
+.team-logo {
+  position: relative;
+  padding: 0; /* 안쪽 여백 제거 */
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* ✅ 로고만 보이도록 + 어두운 배경에 어울리게 색/광 추가 */
+.team-logo-img {
+  display: block;
+  width: 220px; /* 크기 적당히, 필요하면 200~260 사이로 조절 */
+  height: auto;
+  object-fit: contain;
+  /* 검정 로고라면: 흰색처럼 보이게 반전 + 살짝 밝게 */
+  filter: invert(1) brightness(1.1) drop-shadow(0 12px 28px rgba(0, 0, 0, 0.7));
+}
+
+/* ✅ 아주 은은한 빛만 뒤에 깔기 (카드처럼 보이지 않게) */
+.team-logo-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.16),
+    transparent 70%
+  );
+  opacity: 0.6;
+  filter: blur(32px);
+  z-index: -1;
+}
+
+/* 로고 아래 안내 문구 */
+.select-sub {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  letter-spacing: 0.04em;
+}
+
+.select-grid-wrapper {
+  margin-top: 18px;
+  padding: 10px 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(0, 0, 0, 0.6) 55%
+  );
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.select-grid {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  /* 👇 좌우 이동 애니메이션 */
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
+}
+
+.select-card {
+  --lift: 80px;
+  width: 26%;
+  min-width: 220px;
+  height: 260px;
+  border-radius: 22px;
+  border: 1px solid var(--card-bg-soft);
+  background: var(--card-bg); /* 👉 #AAB2BD */
+  color: #131721; /* 회색 박스 위에 어두운 글자 */
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out,
+    background 0.16s ease-out, border 0.16s ease-out;
+  text-align: left;
+}
+
+.select-card:hover {
+  transform: translateY(calc(-1 * var(--lift)));
+  box-shadow: 0 35px 55px rgba(0, 0, 0, 0.85);
+  background: var(--card-bg-soft); /* #CCD1D9 */
+  border-color: var(--accent);
+}
+
+.select-card:active {
+  transform: translateY(calc(-0.5 * var(--lift)));
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.75);
+  background: var(--card-bg-muted); /* #8f97a3 */
+  border-color: var(--accent);
+}
+
+@keyframes slide-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.select-card.slide-left {
+  animation: slide-from-left 0.25s ease-out;
+}
+
+.select-card.slide-right {
+  animation: slide-from-right 0.25s ease-out;
+}
+
+/* 페이지 1 좌우 화살표 */
+.select-nav-btn {
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+/* 반응형: 화면 좁을 때는 카드 폭 줄이기 */
+@media (max-width: 960px) {
+  .select-grid {
+    gap: 10px;
+  }
+  .select-card {
+    width: 30%;
+    min-width: 180px;
+    height: 220px;
+  }
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.back-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f5f5f5;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* 두 번째 페이지에서 이전 버튼만 보일 때 예쁘게 */
+.session-footer .back-btn {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.session-footer .back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+/* 🔥 두 번째 페이지 레이아웃 강제 복구 */
+#page-session .main-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+}
+
+/* 🔥 왼쪽 패널 기본 크기 복원 */
+#page-session .panel {
+  flex: 1 1 0;
+  max-width: none; /* 또는 이 줄을 아예 삭제 */
+}
+
+/* 🔥 오른쪽 패널 크기 복원 */
+#page-session .control-panel {
+  width: 350px;
+  flex-shrink: 0;
+}
+
+.panel-bottom-right {
+  margin-top: 12px; /* 직사각형과 버튼 사이 여유 */
+  width: 100%;
+  display: flex;
+  justify-content: flex-end; /* 오른쪽 끝 정렬 */
+}
+
+/* 이전 버튼 스타일 */
+.panel-bottom-right .back-btn {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.panel-bottom-right .back-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* 카드 안 이모지 + 텍스트 크기 원래대로 */
+
+.select-card .emoji {
+  font-size: 2.2rem; /* 👉 이모지 크게 */
+}
+
+.select-card .name {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.select-card .desc {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- 상단 바 -->
+      <header class="topbar">
+        <div class="top-left">
+          <div class="digital-clock">
+            🕒 <span id="digitalClock">00:00:00</span>
+          </div>
+          <!-- 로고/타이틀 영역 제거됨 -->
+        </div>
+      </header>
+
+      <!-- ① 테마 선택 페이지 (첫 화면) -->
+      <main id="page-select" class="page page-select active">
+        <section class="select-hero">
+          <div class="team-logo">
+            <div class="team-logo-glow"></div>
+            <!-- ✅ 투명 배경으로 만든 파일로 변경 -->
+            <img
+              src="teamlogo.png"
+              alt="우리 팀 로고"
+              class="team-logo-img"
+            />
+          </div>
+        </section>
+
+        <section class="select-grid-wrapper">
+          <button class="control-btn select-nav-btn" id="selectPrevBtn">
+            ◀
+          </button>
+
+          <div class="select-grid" id="selectGrid">
+            <button class="select-card" data-key="fire">
+              <span class="emoji">🔥</span>
+              <span class="name">불멍</span>
+              <span class="desc">장작불 앞에서 멍때리기</span>
+            </button>
+
+            <button class="select-card" data-key="bubble">
+              <span class="emoji">🫧</span>
+              <span class="name">버블</span>
+              <span class="desc">위로 떠오르는 기포 따라가기</span>
+            </button>
+
+            <button class="select-card" data-key="rain">
+              <span class="emoji">🌧</span>
+              <span class="name">빗소리</span>
+              <span class="desc">창밖 빗소리에 집중하기</span>
+            </button>
+
+            <button class="select-card" data-key="snow">
+              <span class="emoji">❄️</span>
+              <span class="name">눈</span>
+              <span class="desc">천천히 내리는 눈송이</span>
+            </button>
+            <button class="select-card" data-key="leaf">
+              <span class="emoji">🍂</span>
+              <span class="name">낙엽</span>
+              <span class="desc">가을바람에 흩날리는 낙엽</span>
+            </button>
+            <button class="select-card" data-key="frost">
+              <span class="emoji">🧊</span>
+              <span class="name">성에</span>
+              <span class="desc">서리 낀 창문 사이의 빛</span>
+            </button>
+          </div>
+
+          <button class="control-btn select-nav-btn" id="selectNextBtn">
+            ▶
+          </button>
+        </section>
+      </main>
+<script>
+var themeInfo = {
+  fire: {
+    emoji: "🔥",
+    name: "불멍",
+    subtitle: "장작불 앞에서 조용히 호흡만 느껴보세요.",
+    bg: "radial-gradient(circle at bottom, #ffb347 0%, #ff7a3c 20%, #0d1117 70%)",
+    url: "fireAni1.html"
+  },
+
+  rain: {
+    emoji: "🌧",
+    name: "빗소리",
+    subtitle: "창 밖으로 떨어지는 빗방울만 바라보는 시간.",
+    bg: "radial-gradient(circle at bottom, #9bb5c9 0%, #4c6d8f 30%, #0d1117 70%)",
+    url: "rainAni1.html"
+  },
+  bubble: {
+    emoji: "🫧",
+    name: "버블",
+    subtitle: "위로 둥둥 떠오르는 기포를 따라가 보세요.",
+    bg: "radial-gradient(circle at bottom, #d7b1ff 0%, #8a55d6 26%, #0d1117 70%)",
+    url: "bubbleAni9.html"
+  },
+  snow: {
+    emoji: "❄️",
+    name: "눈",
+    subtitle: "천천히 내리는 눈송이 사이로 생각을 흘려보내세요.",
+    bg: "radial-gradient(circle at bottom, #f1f6ff 0%, #96b7f8 22%, #0d1117 75%)",
+    url: "snowAni1.html"
+  },
+  leaf: {
+    emoji: "🍂",
+    name: "낙엽",
+    subtitle: "가을 바람에 흩날리는 낙엽처럼 내려놓는 연습.",
+    bg: "radial-gradient(circle at bottom, #ffca85 0%, #b8763a 25%, #0d1117 75%)",
+    url: "leafFallAni8.html"
+  },
+  frost: {
+    emoji: "🧊",
+    name: "성에",
+    subtitle: "서리 낀 창문 사이로 들어오는 차분한 빛.",
+    bg: "radial-gradient(circle at bottom, #d1edff 0%, #5da8d6 24%, #0d1117 75%)",
+    url: "frostAni9.html"
+  },
+};
+
+var sceneEmoji = document.getElementById("currentThemeEmoji");
+var sceneName = document.getElementById("currentThemeName");
+var sceneSub = document.getElementById("currentThemeSubtitle");
+var sceneCanvas = document.getElementById("sceneCanvas");
+
+/* =========================
+   페이지 전환 (선택 / 세션)
+   ========================= */
+var pageSelect = document.getElementById("page-select");
+var pageSession = document.getElementById("page-session");
+var backToSelectBtn = document.getElementById("backToSelect");
+
+function showPage(name) {
+  if (!pageSelect || !pageSession) return;
+  if (name === "select") {
+    pageSelect.classList.add("active");
+    pageSession.classList.remove("active");
+  } else {
+    pageSelect.classList.remove("active");
+    pageSession.classList.add("active");
+  }
+}
+
+if (backToSelectBtn) {
+  backToSelectBtn.addEventListener("click", function () {
+    showPage("select");
+  });
+}
+
+/* =========================
+   테마 적용 함수
+   ========================= */
+// function applyThemeByKey(key) {
+//   var t = themeInfo[key];
+//   if (!t || !sceneCanvas || !sceneEmoji || !sceneName || !sceneSub) return;
+
+//   sceneEmoji.textContent = t.emoji;
+//   sceneName.textContent = t.name;
+//   sceneSub.textContent = t.subtitle;
+//   sceneCanvas.style.background = t.bg;
+
+//   var chips = document.querySelectorAll(".theme-chip");
+//   for (var i = 0; i < chips.length; i++) {
+//     var chip = chips[i];
+//     chip.classList.toggle("active", chip.getAttribute("data-key") === key);
+//   }
+
+//   var cards = document.querySelectorAll(".select-card");
+//   for (var j = 0; j < cards.length; j++) {
+//     var card = cards[j];
+//     card.classList.toggle("active", card.getAttribute("data-key") === key);
+//   }
+// }
+
+/* =========================
+   페이지 1 : 선택 그리드 (큰 카드 3개씩)
+   ========================= */
+
+const MAIN_STATE_KEY = "detox-main-state";
+var SELECT_ORDER = ["fire", "bubble", "rain", "snow", "leaf", "frost"];
+var SELECT_PAGE_SIZE = 3;
+const SELECT_STEP = 1;
+var selectStart = 0;
+
+// ★ 메인 화면 상태 복원
+function restoreMainState() {
+  try {
+    const raw = localStorage.getItem(MAIN_STATE_KEY);
+    if (!raw) return;
+
+    const state = JSON.parse(raw);
+
+    // 1) 카드 슬라이더 위치
+    if (typeof state.selectStart === "number" && TOTAL_THEMES > 0) {
+      selectStart = state.selectStart % TOTAL_THEMES;
+      if (selectStart < 0) selectStart += TOTAL_THEMES;
+    }
+
+    // 2) (선택) 스크롤 위치 복원
+    if (typeof state.scrollY === "number") {
+      // DOM 준비 후 살짝 늦게 스크롤 이동
+      setTimeout(function () {
+        window.scrollTo(0, state.scrollY);
+      }, 0);
+    }
+
+    // 필요하면 여기서 timer 값, 배경음 선택 등도 복원 가능
+  } catch (e) {
+    // 파싱 실패해도 그냥 무시
+  }
+}
+
+// ★ 메인 화면 상태 저장
+function saveMainState() {
+  try {
+    const state = {
+      selectStart: selectStart,
+      scrollY: window.scrollY || 0,
+      // timerMin: timerMinInput ? timerMinInput.value : "",
+      // timerSec: timerSecInput ? timerSecInput.value : "",
+      // 나중에 더 저장하고 싶으면 여기 추가
+    };
+    localStorage.setItem(MAIN_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // 저장 실패해도 크게 문제 없음
+  }
+}
+
+// 페이지 떠나기 직전에 한 번 더 상태 저장
+window.addEventListener("beforeunload", saveMainState);
+
+
+// ⭐ 전체 테마 개수 (원형 슬라이더용)
+var TOTAL_THEMES = SELECT_ORDER.length;
+
+var selectPrevBtn = document.getElementById("selectPrevBtn");
+var selectNextBtn = document.getElementById("selectNextBtn");
+var selectCards = document.querySelectorAll(".select-card");
+
+/* 👉 추가: 좌우 이동 방향 저장 (-1 = 왼쪽 버튼, 1 = 오른쪽 버튼, 0 = 초기/애니메이션 없음) */
+var selectDirection = 0;
+
+function updateSelectGrid() {
+  if (!selectCards.length) return;
+
+  for (var i = 0; i < selectCards.length; i++) {
+    var card = selectCards[i];
+
+    // 이 카드의 key (fire  / rain / bubble / snow / leaf / frost)
+    var key = card.getAttribute("data-key");
+    var idx = SELECT_ORDER.indexOf(key);
+
+    // 혹시 정의 안 된 카드면 숨김
+    if (idx === -1) {
+      card.style.display = "none";
+      continue;
+    }
+
+    // SELECT_ORDER 순서를 기준으로 offset 계산
+    var offset = (idx - selectStart + TOTAL_THEMES) % TOTAL_THEMES;
+
+    // 3장 보여주기
+    var visible = offset >= 0 && offset < SELECT_PAGE_SIZE;
+
+    if (visible) {
+      card.style.display = "flex";
+
+      // ★ 여기서 flex 정렬 순서를 offset(0,1,2)로 강제
+      card.style.order = offset;
+
+      // 애니메이션 초기화
+      card.classList.remove("slide-left", "slide-right");
+
+      if (selectDirection !== 0) {
+        // 강제 리플로우로 애니메이션 리셋
+        void card.offsetWidth;
+
+        if (selectDirection === 1) {
+          card.classList.add("slide-right");
+        } else if (selectDirection === -1) {
+          card.classList.add("slide-left");
+        }
+      }
+    } else {
+      card.style.display = "none";
+      // 안 보이는 카드는 order 크게 주거나 비워도 상관 없음
+      card.style.order = 99;
+    }
+  }
+
+  // 원형 슬라이더니까 버튼은 항상 활성화
+  if (selectPrevBtn) selectPrevBtn.disabled = false;
+  if (selectNextBtn) selectNextBtn.disabled = false;
+}
+
+// ◀ 왼쪽: 1칸 뒤로 (원형)
+if (selectPrevBtn) {
+  selectPrevBtn.addEventListener("click", function () {
+    selectDirection = -1; // ← 왼쪽으로 이동
+    selectStart = (selectStart - SELECT_STEP + TOTAL_THEMES) % TOTAL_THEMES;
+    updateSelectGrid();
+  });
+}
+
+// ▶ 오른쪽: 1칸 앞으로 (원형)
+if (selectNextBtn) {
+  selectNextBtn.addEventListener("click", function () {
+    selectDirection = 1; // → 오른쪽으로 이동
+    selectStart = (selectStart + SELECT_STEP) % TOTAL_THEMES;
+    updateSelectGrid();
+  });
+}
+
+for (var k = 0; k < selectCards.length; k++) {
+  (function (card) {
+    card.addEventListener("click", function () {
+      var key = card.getAttribute("data-key");
+      var info = themeInfo[key];
+
+      saveMainState(); // 선택 직전에 상태 저장
+
+      if(info && info.url && info.url !== "") {
+        window.location.href = info.url;
+        return;
+      }
+      applyThemeByKey(key);
+      showPage("session");
+    });
+  })(selectCards[k]);
+}
+
+/* =========================
+   페이지 2 : 하단 테마 스트립 (작은 칩들)
+   ========================= */
+var THEME_ORDER = ["fire", "rain", "bubble", "snow", "leaf", "frost"];
+var PAGE_SIZE = 3;
+var themePageStart = 0;
+
+var prevThemeBtn = document.getElementById("prevThemeBtn");
+var nextThemeBtn = document.getElementById("nextThemeBtn");
+
+function updateThemeStrip() {
+  var chips = document.querySelectorAll(".theme-chip");
+  if (!chips.length) return;
+
+  for (var i = 0; i < chips.length; i++) {
+    var chip = chips[i];
+    var visible = i >= themePageStart && i < themePageStart + PAGE_SIZE;
+    chip.style.display = visible ? "flex" : "none";
+  }
+
+  if (prevThemeBtn) {
+    prevThemeBtn.disabled = themePageStart === 0;
+  }
+  if (nextThemeBtn) {
+    nextThemeBtn.disabled = themePageStart + PAGE_SIZE >= THEME_ORDER.length;
+  }
+}
+
+if (prevThemeBtn) {
+  prevThemeBtn.addEventListener("click", function () {
+    if (themePageStart > 0) {
+      themePageStart -= PAGE_SIZE;
+      if (themePageStart < 0) themePageStart = 0;
+      updateThemeStrip();
+    }
+  });
+}
+
+if (nextThemeBtn) {
+  nextThemeBtn.addEventListener("click", function () {
+    if (themePageStart + PAGE_SIZE < THEME_ORDER.length) {
+      themePageStart += PAGE_SIZE;
+      updateThemeStrip();
+    }
+  });
+}
+
+var themeChips = document.querySelectorAll(".theme-chip");
+for (var c = 0; c < themeChips.length; c++) {
+  (function (btn) {
+    btn.addEventListener("click", function () {
+      applyThemeByKey(btn.getAttribute("data-key"));
+    });
+  })(themeChips[c]);
+}
+
+/* =========================
+   타이머 로직
+   ========================= */
+/* =========================
+   타이머 로직
+   ========================= */
+var timerMinInput = document.getElementById("timerMin");
+var timerSecInput = document.getElementById("timerSec");
+var timerDisplay = document.getElementById("timerDisplay");
+
+var timerStartBtn = document.getElementById("timerStartBtn");
+var timerPauseBtn = document.getElementById("timerPauseBtn");
+var timerResetBtn = document.getElementById("timerResetBtn");
+
+var timerInterval = null;
+var timerRemainingMs = 0;
+var timerRunning = false;
+
+var startBtnIcon = null;
+var startBtnLabel = null;
+if (timerStartBtn) {
+  startBtnIcon = timerStartBtn.querySelector("i");
+  startBtnLabel = timerStartBtn.querySelector("span");
+}
+
+/* 🔒 여기부터 새로 추가: 음수 입력 방지 */
+function blockNegative(inputEl) {
+  if (!inputEl) return;
+
+  // 키보드로 '-'나 'e' 입력 자체 막기 (음수 / 지수표기 방지)
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "-" || e.key === "e") {
+      e.preventDefault();
+    }
+  });
+
+  // 값이 바뀔 때마다 0 미만이면 강제로 0으로 고정
+  inputEl.addEventListener("input", function () {
+    var n = parseInt(inputEl.value || "0", 10);
+
+    if (isNaN(n) || n < 0) {
+      n = 0;
+    }
+
+    inputEl.value = n;
+  });
+}
+
+// 타이머 입력칸 두 개에 적용
+blockNegative(timerMinInput);
+blockNegative(timerSecInput);
+/* 🔒 여기까지 추가 */
+
+/* 원래 있던 함수 그대로 아래 유지 */
+function setStartBtnState(isRunning) {
+  if (!startBtnIcon) return;
+  if (isRunning) {
+    startBtnIcon.classList.remove("fa-play");
+    startBtnIcon.classList.add("fa-pause");
+    if (startBtnLabel) startBtnLabel.textContent = "진행 중";
+  } else {
+    startBtnIcon.classList.remove("fa-pause");
+    startBtnIcon.classList.add("fa-play");
+    if (startBtnLabel) startBtnLabel.textContent = "시작";
+  }
+}
+
+var detoxSessionActive = false;
+
+function formatTimer(ms) {
+  var totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  var m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  var s = String(totalSeconds % 60).padStart(2, "0");
+  return m + ":" + s;
+}
+
+function updateTimerDisplay() {
+  if (timerDisplay) {
+    timerDisplay.textContent = formatTimer(timerRemainingMs);
+  }
+}
+
+function readTimerFromInput() {
+  if (!timerMinInput || !timerSecInput) return 0;
+  var m = parseInt(timerMinInput.value || "0", 10);
+  var s = parseInt(timerSecInput.value || "0", 10);
+  var total = (m * 60 + s) * 1000;
+  return isNaN(total) ? 0 : total;
+}
+
+function startTimer() {
+  if (timerRunning) return;
+
+  if (timerRemainingMs <= 0) {
+    timerRemainingMs = readTimerFromInput();
+    if (timerRemainingMs <= 0) {
+      alert("분/초를 입력한 뒤 시작을 눌러주세요.");
+      return;
+    }
+  }
+
+  timerRunning = true;
+  setStartBtnState(true);
+
+  var startTime = Date.now();
+  var startRemaining = timerRemainingMs;
+
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(function () {
+    var elapsed = Date.now() - startTime;
+    timerRemainingMs = startRemaining - elapsed;
+
+    if (timerRemainingMs <= 0) {
+      timerRemainingMs = 0;
+      updateTimerDisplay();
+      clearInterval(timerInterval);
+      timerRunning = false;
+      onTimerFinished();
+    } else {
+      updateTimerDisplay();
+    }
+  }, 200);
+
+  updateTimerDisplay();
+}
+
+function pauseTimer() {
+  if (!timerRunning) return;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  setStartBtnState(false);
+}
+
+function resetTimer() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  timerRemainingMs = 0;
+  updateTimerDisplay();
+  detoxSessionActive = false;
+  updateLockStatus("상태: 대기 중");
+  setStartBtnState(false);
+}
+
+if (timerStartBtn) {
+  timerStartBtn.addEventListener("click", function () {
+    detoxSessionActive = false;
+    updateLockStatus("상태: 대기 중");
+    startTimer();
+  });
+}
+if (timerPauseBtn) {
+  timerPauseBtn.addEventListener("click", pauseTimer);
+}
+if (timerResetBtn) {
+  timerResetBtn.addEventListener("click", resetTimer);
+}
+
+updateTimerDisplay();
+
+/* =========================
+   초기 상태 세팅
+   ========================= */
+selectDirection = 0; // 초기엔 애니메이션 없이 배치
+
+restoreMainState();
+
+updateThemeStrip();
+updateSelectGrid();
+
+showPage("select");
+setStartBtnState(false);
+
+/* =========================
+   배경 소리 로직 (옵션)
+   ========================= */
+var bgSound = document.getElementById("bgSound");
+var soundButtons = document.querySelectorAll(".sound-btn");
+
+var soundFiles = {
+  none: "",
+  calm: "sounds/calm.mp3",
+  bright: "sounds/bright.mp3",
+};
+
+function setBackgroundSound(key) {
+  if (!bgSound) return;
+
+  for (var i = 0; i < soundButtons.length; i++) {
+    var btn = soundButtons[i];
+    btn.classList.toggle("active", btn.getAttribute("data-sound") === key);
+  }
+
+  var src = soundFiles[key] || "";
+  if (!src) {
+    bgSound.pause();
+    bgSound.removeAttribute("src");
+    bgSound.load();
+    return;
+  }
+
+  if (bgSound.getAttribute("data-current") === key) return;
+
+  bgSound.setAttribute("data-current", key);
+  bgSound.src = src;
+  bgSound.currentTime = 0;
+  bgSound.play()["catch"](function () {});
+}
+
+for (var i2 = 0; i2 < soundButtons.length; i2++) {
+  (function (btn) {
+    btn.addEventListener("click", function () {
+      setBackgroundSound(btn.getAttribute("data-sound"));
+    });
+  })(soundButtons[i2]);
+}
+
+setBackgroundSound("none");
+
+// 로고 밑 버블 버튼 3개 클릭 → 테마 적용 + 세션 페이지로 이동
+document.querySelectorAll(".bubble-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.key; // fire / water / leaf
+    applyThemeByKey(key);
+    showPage("session");
+  });
+});
+
+// =========================
+// 디지털 시계 (현재 시간 표시)
+// =========================
+(function () {
+  const clockEl = document.getElementById("digitalClock");
+  if (!clockEl) return;  // 혹시 요소가 없으면 그냥 종료
+
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const hh = pad2(now.getHours());      // 0~23시 (24시간제)
+    const mm = pad2(now.getMinutes());
+    const ss = pad2(now.getSeconds());
+    clockEl.textContent = `${hh}:${mm}:${ss}`;
+  }
+
+  updateClock();                // 페이지 켜지자마자 한 번 표시
+  setInterval(updateClock, 1000); // 1초마다 갱신
+})();
+    </script>
+  </body>
+</html>
